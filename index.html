@@ -1,24 +1,35 @@
-// 1. Define the different map styles (Layers)
-const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-});
 
-const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles © Esri'
-});
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>TACNET</title>
+    <!-- 1. ESSENTIAL CSS: If this is missing, the map is invisible -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100vw; }
+    </style>
+</head>
+<body>
 
-// 2. Initialize the map with the Street layer active by default
-const map = L.map('map', {
-    center: [37.5407, -77.4360], 
-    zoom: 15,
-    layers: [streetLayer] // Sets the default view
-});
+    <!-- 2. THE MAP CONTAINER -->
+    <div id="map"></div>
 
-// 3. Create a group for the layers
-const baseMaps = {
-    "Streets": streetLayer,
-    "Satellite": satelliteLayer
-};
+    <!-- 3. LEAFLET JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // 4. INITIALIZE
+        // We initialize AFTER the div is loaded
+        const map = L.map('map').setView([37.5407, -77.4360], 13);
 
-// 4. Add the Layer Control button to the map
-L.control.layers(baseMaps).addTo(map);
+        // 5. ADD TILES
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+        
+        console.log("Map initialized successfully");
+    </script>
+</body>
+</html>
