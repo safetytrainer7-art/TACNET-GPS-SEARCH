@@ -4,77 +4,66 @@
     <meta charset="UTF-8">
     <title>TACNET Command Center</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
     <style>
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #0b2512; }
-        #sidebar { width: 320px; background: #0b2512; color: #fff; padding: 20px; display: flex; flex-direction: column; gap: 10px; border-right: 2px solid #2a5a3a; }
+        body { margin: 0; display: flex; height: 100vh; background: #0b2512; color: white; font-family: sans-serif; }
+        #sidebar { width: 320px; padding: 15px; border-right: 2px solid #2a5a3a; overflow-y: auto; }
         #map { flex-grow: 1; }
-        button { padding: 12px; background: #2a5a3a; color: white; border: 1px solid #4a7a5a; cursor: pointer; font-weight: bold; text-align: left; }
-        .nvg-active { filter: sepia(100%) hue-rotate(80deg) brightness(0.6) contrast(1.5); }
-        /* Legend Styles */
-        .legend { background: white; color: black; padding: 10px; border-radius: 5px; }
+        .legend-bar { position: absolute; bottom: 10px; left: 330px; background: #1a1a1a; padding: 10px; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; z-index: 1000; }
+        button { background: #2a5a3a; color: white; border: none; padding: 10px; width: 100%; margin-bottom: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>TACNET V1</h2>
-    <button onclick="toggleNVG()">TOGGLE NVG MODE</button>
-    <button onclick="addHelipad()">PLACE HELIPAD</button>
-    <button onclick="activateRNG()">RNG MEASUREMENT (ORANGE)</button>
-    <button onclick="triggerTrapTrace()">TRAP AND TRACE</button>
-    <button onclick="triggerK9Medical()">K9 VOICE PROTOCOLS</button>
-    <button onclick="window.print()">GENERATE REPORT</button>
-    <div id="status" style="margin-top:20px; font-size: 0.8em; color: #aaa;">System: Tracking Active</div>
+    <h3>TACNET COMMAND</h3>
+    <input type="text" id="address" placeholder="Enter address..." style="width:100%; padding:8px;">
+    <button onclick="geocode()">GO</button>
+    <button onclick="toggleNVG('red')">RED NVG</button>
+    <button onclick="toggleNVG('green')">GREEN NVG</button>
+    <button id="sos" onclick="triggerSOS()" style="background:red;">SOS ALERT (OFF)</button>
+    <button onclick="terminateSearch()" style="background:black;">TERMINATE SEARCH</button>
+    <button onclick="window.print()">GENERATE COURT REPORT</button>
 </div>
+
 <div id="map"></div>
 
+<div class="legend-bar">
+    <span>🔵 LE</span> <span>💠 LE+K9</span> <span>🔴 SARS</span> <span>🟢 Civ</span> <span>🟣 Suspect</span> <span>⚪ Victim</span> <span>🔘 Drone</span> <span>🟠 Article</span> <span>⚫ Vehicle/Boat</span> <span>🟢 SARS Boat</span> <span>🟨 Command</span> <span>🟦 VSP</span> <span>🥇 Federal</span>
+</div>
+
 <script>
-    const client = new Appwrite.Client()
-        .setEndpoint('https://nyc.cloud.appwrite.io/v1')
-        .setProject('6a38e834003e0cc64c31');
-    const databases = new Appwrite.Databases(client);
-    
     const map = L.map('map').setView([37.5407, -77.4360], 15);
-    L.tileLayer('https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-    // 1. Searcher Legend (Standardized Colors)
-    const legend = L.control({position: 'bottomright'});
-    legend.onAdd = function() {
-        const div = L.DomUtil.create('div', 'legend');
-        div.innerHTML = '<b>Unit Legend</b><br>🟢 K9<br>🔵 Water Rescue<br>🔴 Fire/Rescue';
-        return div;
-    };
-    legend.addTo(map);
+    // Drawing Engine
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+    const drawControl = new L.Control.Draw({ edit: { featureGroup: drawnItems } });
+    map.addControl(drawControl);
 
-    // 2. Real-Time Tracking
-    const teamMarkers = {};
-    client.subscribe('databases.tacnet_telemetry_db.collections.tacnet_live_units.documents', res => {
-        const u = res.payload;
-        if(teamMarkers[u.$id]) teamMarkers[u.$id].setLatLng([u.lat, u.lng]);
-        else teamMarkers[u.$id] = L.marker([u.lat, u.lng]).addTo(map).bindPopup(u.callSign);
-    });
-
-    // 3. Orange RNG Tool (Auto-Measuring)
-    function activateRNG() {
-        let points = [];
-        map.on('click', e => {
-            points.push(e.latlng);
-            if(points.length === 2) {
-                const dist = points[0].distanceTo(points[1]).toFixed(0);
-                L.polyline(points, {color: 'orange', weight: 5}).addTo(map)
-                 .bindPopup("Distance: " + dist + " meters").openPopup();
-                points = [];
-                map.off('click');
-            }
-        });
+    function geocode() {
+        const addr = document.getElementById('address').value;
+        // Logic for perimeter circle and red dot placement
+        const redDot = L.circleMarker([37.54, -77.43], {color: 'red', radius: 8}).addTo(map);
+        const perimeter = L.circle([37.54, -77.43], {radius: 50, color: 'green'}).addTo(map);
     }
 
-    function toggleNVG() { document.getElementById('map').classList.toggle('nvg-active'); }
-    function addHelipad() { map.once('click', e => L.marker(e.latlng).bindPopup("HELIPAD").addTo(map)); }
-    function triggerTrapTrace() { alert("Trap and Trace active."); }
-    function triggerK9Medical() { alert("Voice Protocol: K9 trauma instructions initiated."); }
+    function triggerSOS() {
+        const btn = document.getElementById('sos');
+        btn.innerText = "SOS ACTIVE - FLASHING";
+        btn.style.animation = "blink 1s infinite";
+    }
+
+    function terminateSearch() {
+        if(confirm("TERMINATE SEARCH?")) window.location.reload();
+    }
+
+    function toggleNVG(color) {
+        document.getElementById('map').style.filter = (color === 'green') ? 'sepia(100%) hue-rotate(80deg)' : 'invert(100%)';
+    }
 </script>
 </body>
 </html>
