@@ -6,6 +6,7 @@
     <title>TACNET - Live Field Operations Platform</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
+        /* MOBILE PHONE HYPER-OPTIMIZATION & FIXED HEIGHT PREVENTING OVERFLOW */
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         body, html { 
             width: 100%; height: 100%; 
@@ -15,19 +16,48 @@
         }
 
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 10; background-color: #020208; }
-        #screenSignIn { display: flex !important; z-index: 20; }
+        
+        /* PRESENTATION SEQUENCE INITIAL ENTRY ROUTE */
+        #screenLanding { display: flex !important; z-index: 40; cursor: pointer; }
         .screen.active { display: flex !important; z-index: 30; }
 
-        /* HOMEPAGE IMAGE CORE BACKGROUND MAPPING LAYER */
+        /* HOMEPAGE CORE FULL-SCREEN IMAGE LAYERING */
         .backdrop {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(2, 6, 23, 0.75), rgba(15, 23, 42, 0.85)), 
+            background: linear-gradient(rgba(2, 6, 23, 0.7), rgba(15, 23, 42, 0.85)), 
                         url('IMAGE FOR TAC.png2.jpg'),
-                        linear-gradient(135deg, #041a10 0%, #010206 100%);
+                        linear-gradient(135deg, #041a10 0%, #020208 100%);
             background-size: cover; background-position: center; background-repeat: no-repeat;
             z-index: 1;
         }
 
+        .landing-branding-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(2, 6, 23, 0.45), rgba(2, 2, 8, 0.8)), 
+                        url('IMAGE FOR TAC.png2.jpg'),
+                        linear-gradient(135deg, #052216 0%, #010206 100%);
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1;
+        }
+
+        .branding-title-glow {
+            font-size: 3.5rem; font-weight: 900; letter-spacing: 8px; color: #ffffff; text-align: center;
+            text-shadow: 0 0 35px rgba(34, 197, 94, 0.7); margin-bottom: 0.25rem;
+        }
+
+        .branding-subtitle-gold {
+            font-size: 0.9rem; color: #eab308; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 4px; text-align: center; margin-bottom: 3rem;
+        }
+
+        .advance-prompt-box {
+            background: rgba(15, 23, 42, 0.9); border: 2px solid #eab308; padding: 1rem 2rem; border-radius: 6px;
+            box-shadow: 0 0 25px rgba(234, 179, 8, 0.4); text-align: center;
+        }
+
+        .advance-prompt-text { color: #eab308; font-weight: 900; font-size: 1rem; text-transform: uppercase; letter-spacing: 1.5px; animation: pulse-gold 1.5s infinite ease-in-out; }
+
+        /* PORTAL SHEET PANEL CONTAINER */
         .glass-panel {
             background: rgba(15, 23, 42, 0.95); border: 2px solid rgba(34, 197, 94, 0.3);
             backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
@@ -43,19 +73,19 @@
         .role-btn { flex: 1; padding: 0.6rem; background: #1e293b; border: 1px solid #475569; color: #94a3b8; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; border-radius: 4px; text-align: center; cursor: pointer; }
         .role-btn.active { background: #1d4ed8; border-color: #60a5fa; color: #fff; }
 
+        /* BUTTON CONTROLS */
         .btn { display: block; text-align: center; width: 100%; padding: 0.85rem; background: #1d4ed8; color: #fff; border: 1px solid #60a5fa; border-radius: 4px; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; cursor: pointer; }
         .btn-secondary { background: #1e293b; border-color: #475569; margin-top: 0.5rem; }
         .btn-danger { background: #7f1d1d; border-color: #f87171; margin-top: 0.5rem; }
         .menu-container { display: flex; flex-direction: column; gap: 0.6rem; width: 92%; max-width: 380px; margin: auto; z-index: 5; }
 
-        /* TACTICAL INTERACTIVE PANEL TILES */
+        /* INTEL DATASHEETS MODAL POPUPS */
         .hub-deck-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; width: 100%; margin-bottom: 0.5rem; }
         .hub-tile { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 0.75rem; text-align: center; cursor: pointer; }
         .hub-tile:active { background: rgba(29, 78, 216, 0.4); border-color: #3b82f6; }
         .hub-tile-icon { font-size: 1.4rem; margin-bottom: 0.2rem; display: block; }
         .hub-tile-title { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; color: #cbd5e1; letter-spacing: 0.5px; }
 
-        /* IMMERSIVE POPUP INTEL SHEETS */
         .intel-modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2,2,6,0.95); z-index: 500; padding: 1.5rem; flex-direction: column; overflow-y: auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.75rem; border-bottom: 2px solid #334155; margin-bottom: 1rem; }
         .modal-title { font-size: 1.1rem; font-weight: 900; color: #eab308; text-transform: uppercase; }
@@ -63,8 +93,11 @@
         .modal-body { flex-grow: 1; font-size: 0.85rem; line-height: 1.5; color: #cbd5e1; }
         .med-section { background: rgba(255,255,255,0.03); border-left: 3px solid #22c55e; padding: 0.6rem; margin-bottom: 0.8rem; border-radius: 0 4px 4px 0; }
         .med-title { font-weight: 900; color: #fff; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 0.2rem; }
+        
+        .replay-control-row { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
+        .replay-btn { flex: 1; padding: 0.4rem; background: #0284c7; border: 1px solid #38bdf8; color: #fff; font-size: 0.65rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; text-align: center; cursor: pointer; }
 
-        /* REGRID MAP EXPANSION WORKSPACE LAYOUTS */
+        /* REGRID EXPANDED MAP LAYOUT PANELS */
         .map-wrapper { position: relative; flex-grow: 1; width: 100%; height: 100%; background: #020617; }
         #map { width: 100%; height: 100%; z-index: 2; }
 
@@ -103,9 +136,19 @@
         .tac-marker { border-radius: 50% !important; border: 2px solid #ffffff !important; box-shadow: 0 0 10px rgba(0,0,0,0.8) !important; pointer-events: auto !important; }
         .user-gps-dot { background: #f43f5e !important; border: 2px solid #ffffff !important; box-shadow: 0 0 14px #f43f5e !important; border-radius: 50% !important; width: 16px !important; height: 16px !important; }
 
-        /* VISUAL TACTICAL RANGE VECTOR POPUP MATRIX */
         .range-popup-label .leaflet-popup-content-wrapper { background: rgba(15, 23, 42, 0.95) !important; border: 2px solid #ff6600 !important; color: #ff6600 !important; font-family: monospace !important; font-weight: 900 !important; font-size: 0.75rem !important; text-align: center !important; border-radius: 4px !important; padding: 2px 6px !important; box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important; }
         .range-popup-label .leaflet-popup-tip { background: #ff6600 !important; }
+
+        /* EMERGENCY HUD OVERLAY DESIGN CARD */
+        .emergency-identity-card {
+            position: absolute; top: 135px; left: 50%; transform: translateX(-50%);
+            width: 88%; max-width: 340px; background: rgba(15, 23, 42, 0.98);
+            border: 3px solid #ef4444; border-radius: 6px; padding: 1rem; z-index: 100000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(239, 68, 68, 0.4);
+            display: none; text-align: center;
+        }
+        .emergency-card-header { font-size: 0.95rem; font-weight: 900; color: #ef4444; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px; }
+        .emergency-card-body { font-size: 0.85rem; line-height: 1.4; color: #f8fafc; font-weight: 700; }
 
         .dot-k9 { background: #00eaff !important; }
         .dot-le { background: #0022ff !important; }
@@ -136,6 +179,7 @@
         .hardware-warning-banner { position: absolute; top: 72px; left: 50%; transform: translateX(-50%); background: rgba(127, 29, 29, 0.95); border: 2px solid #ef4444; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: #fca5a5; z-index: 200; display: none; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 85%; max-width: 320px; }
 
         @keyframes flash-strobe { 0% { opacity: 0; } 100% { opacity: 1; } }
+        @keyframes pulse-gold { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
     </style>
 </head>
 <body>
@@ -145,52 +189,18 @@
         ⚠️ SENSOR LOCK: Direct satellite link buffering. Tap "FIND ME" to override manually.
     </div>
 
-    <div id="modalReplay" class="intel-modal">
-        <div class="modal-header"><div class="modal-title">⏱️ RECORDED MISSION REPLAY CONSOLE</div><div class="modal-close" onclick="closeIntelModal('modalReplay')">×</div></div>
-        <div class="modal-body">
-            <p style="margin-bottom:1rem; color:#94a3b8;">Select telemetry segment replay matrix to sync tracking path vectors across the high-altitude map layer:</p>
-            <div class="med-section" style="border-color:#0284c7;">
-                <div class="med-title">Log Segment #01 - River Run Track</div>
-                <div style="font-size:0.75rem; color:#cbd5e1;">Duration: 42 Mins · Track Arcs Recorded: 14 K9 Anchors</div>
-                <button class="btn btn-secondary" style="padding:0.4rem; font-size:0.65rem; width:auto; margin-top:0.4rem;" onclick="alert('Syncing River Run vector coordinates...')">Render Segment</button>
-            </div>
-            <div class="med-section" style="border-color:#0284c7;">
-                <div class="med-title">Log Segment #02 - Thick Brush Fugitive Trailing Arcs</div>
-                <div style="font-size:0.75rem; color:#cbd5e1;">Duration: 1 hr 15 Mins · Team Separation Warning Logged: 3 Faults</div>
-                <button class="btn btn-secondary" style="padding:0.4rem; font-size:0.65rem; width:auto; margin-top:0.4rem;" onclick="alert('Syncing Ridge trailing records...')">Render Segment</button>
+    <!-- STAGE 1: BRANDING LANDING HOMEPAGE (LAUNCH STATE PASSING DIRECTLY ON TOUCH) -->
+    <div id="screenLanding" class="screen" onclick="switchScreen('screenSignIn')">
+        <div class="landing-branding-container">
+            <h1 class="branding-title-glow">TACNET</h1>
+            <p class="branding-subtitle-gold">Multi-Agency Tactical Command Network</p>
+            <div class="advance-prompt-box">
+                <p class="advance-prompt-text">Initialize Secure Portal</p>
             </div>
         </div>
     </div>
 
-    <div id="modalReports" class="intel-modal">
-        <div class="modal-header"><div class="modal-title">📋 ACTIVE SYSTEM REPORT ARCHIVE</div><div class="modal-close" onclick="closeIntelModal('modalReports')">×</div></div>
-        <div class="modal-body">
-            <div class="med-section" style="border-color:#eab308;">
-                <div class="med-title">Incident Dispatch #2026-SAR-09</div>
-                <div style="font-size:0.75rem;">Multi-agency command post established. Blue/Red cross-sync variables deployed to Jotform infrastructure pools. Offering data locked.</div>
-            </div>
-            <div class="med-section" style="border-color:#eab308;">
-                <div class="med-title">Civil Encounters Logging Registry</div>
-                <div style="font-size:0.75rem;">Asset valuation and vehicle recovery dispatch files archived for county records. Tracking logs active.</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalK9Med" class="intel-modal">
-        <div class="modal-header"><div class="modal-title">🐾 TAC-MED: K9 FIELD TRAUMA REGISTER</div><div class="modal-close" onclick="closeIntelModal('modalK9Med')">×</div></div>
-        <div class="modal-body">
-            <div class="med-section"><div class="med-title">1. K9 CPR & AIRWAY BLOCKAGES</div><div>Lay dog on right side. Clear muzzle of debris/froth. Close muzzle with hands, blow directly into nose twice. Compress chest wall behind elbow 15 times. Cycle continuously.</div></div>
-            <div class="med-section"><div class="med-title">2. GUNSHOT WOUNDS & EXCESSIVE BLEEDING</div><div>Locate entry/exit channels. Pack tightly with sterile gauze or clean field cloth. Apply hard, manual hand pressure for 5 minutes straight without checking. Bind with compression wrap.</div></div>
-            <div class="med-section"><div class="med-title">3. SNAKE BITES (THICK BRUSH ENVENOMATION)</div><div>Identify puncture points. Keep K9 strictly calm and immobilized to slow toxin circulation. Flush with clean water. Do NOT cut open or apply suction. Advance immediately to vet.</div></div>
-            <div class="med-section"><div class="med-title">4. EYE & PAW INJURIES</div><div>Flush eyes with saline/water to clear thick brush briars. Do not apply ointments. For torn pads/paws, apply clean protective dressing to prevent tracking contamination.</div></div>
-            <div class="med-section"><div class="med-title">5. HEAT EXHAUSTION PROTOCOLS</div><div>Symptoms: Heavy dark red tongue, glassy eyes, stalling. Flush paws and ears with cool water immediately. Apply fan. Do NOT plunge torso into ice water (causes shock).</div></div>
-            <div class="med-section" style="border-color:#eab308;"><div class="med-title">🏥 24-HOUR EMERGENCY REGIONAL VETERINARIANS</div>
-                <div style="margin-top:0.3rem; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:3px;">**Valley Emergency Vet Clinic:** (544) 555-0199 · Route 11 CP Grid Focus</div>
-                <div style="margin-top:0.3rem; font-size:0.75rem;">**Capital Veterinary Trauma Center:** (544) 555-0122 · 24-hr Command Support Row</div>
-            </div>
-        </div>
-    </div>
-
+    <!-- STAGE 2: PORTAL SHEET SECURITY GATEWAY SIGN-IN -->
     <div id="screenSignIn" class="screen">
         <div class="backdrop"></div>
         <div style="z-index: 5; margin-top: 2rem; margin-bottom: 0.5rem; text-align: center;">
@@ -213,6 +223,7 @@
         </div>
     </div>
 
+    <!-- STAGE 3: TACNET HUB MENU -->
     <div id="screenMenu" class="screen">
         <div class="backdrop"></div>
         <div style="z-index: 5; margin-top: 1.5rem; margin-bottom: 0.5rem; text-align: center;">
@@ -229,16 +240,22 @@
 
             <div class="btn" onclick="startNewSearch()">Start New Search</div>
             <div class="btn btn-secondary" onclick="switchScreen('screenMap')">Join Active Search Matrix</div>
-            
             <div class="btn btn-danger" onclick="terminateSearch()">[END] De-escalate Terminal</div>
         </div>
         
-        <div class="creator-credits" style="height: auto; position: absolute; bottom: 0; text-align: center; width: 100%; padding: 0.8rem;">
+        <div class="creator-credits" style="height: auto; position: absolute; bottom: 0; text-align: center; width: 100%; padding: 1rem;">
             <div class="creator-name" style="font-size: 1.1rem; color: #eab308; font-weight: 900; letter-spacing: 1px;">EARL WOOD · RETIRED DEPUTY SHERIFF</div>
         </div>
     </div>
 
+    <!-- STAGE 4: ACTIVE HIGH-ALTITUDE VIEWPORT LAYOUT -->
     <div id="screenMap" class="screen">
+        <!-- CRITICAL IDENTITY TRANSMISSION HUD COMPONENT -->
+        <div id="operatorEmergencyHUDCard" class="emergency-identity-card">
+            <div class="emergency-card-header">🚨 DOWN OPERATOR IDENTITY</div>
+            <div id="emergencyCardTelemetryBody" class="emergency-card-body">LOADING SIGN-IN DETAILS...</div>
+        </div>
+
         <div class="regrid-floating-topnav">
             <div class="nav-arrow" onclick="switchScreen('screenMenu')">←</div>
             <button id="btnSat" class="map-toggle-btn active" onclick="setMapType('satellite')">Sat</button>
@@ -311,6 +328,53 @@
         </div>
     </div>
 
+    <!-- IMMERSIVE REPLAY LOG POPUP -->
+    <div id="modalReplay" class="intel-modal">
+        <div class="modal-header"><div class="modal-title">⏱️ RECORDED MISSION REPLAY CONSOLE</div><div class="modal-close" onclick="closeIntelModal('modalReplay')">×</div></div>
+        <div class="modal-body">
+            <p style="margin-bottom:1rem; color:#94a3b8;">Select telemetry segment replay matrix to sync tracking path vectors:</p>
+            <div class="med-section" style="border-color:#0284c7;">
+                <div class="med-title">Log Segment #01 - River Run Track</div>
+                <button class="btn btn-secondary" style="padding:0.4rem; font-size:0.65rem; width:auto; margin-top:0.4rem;" onclick="alert('Syncing River Run vector coordinates...')">Render Segment</button>
+            </div>
+            <div class="med-section" style="border-color:#0284c7;">
+                <div class="med-title">Log Segment #02 - Thick Brush Fugitive Trailing Arcs</div>
+                <button class="btn btn-secondary" style="padding:0.4rem; font-size:0.65rem; width:auto; margin-top:0.4rem;" onclick="alert('Syncing Ridge trailing records...')">Render Segment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMMERSIVE FINAL REPORTS POPUP -->
+    <div id="modalReports" class="intel-modal">
+        <div class="modal-header"><div class="modal-title">📋 ACTIVE SYSTEM REPORT ARCHIVE</div><div class="modal-close" onclick="closeIntelModal('modalReports')">×</div></div>
+        <div class="modal-body">
+            <div class="med-section" style="border-color:#eab308;">
+                <div class="med-title">Incident Dispatch #2026-SAR-09</div>
+                <div style="font-size:0.75rem;">Multi-agency command post established. Blue/Red cross-sync variables deployed to Jotform infrastructure pools.</div>
+            </div>
+            <div class="med-section" style="border-color:#eab308;">
+                <div class="med-title">Civil Encounters Logging Registry</div>
+                <div style="font-size:0.75rem;">Asset valuation and vehicle recovery dispatch files archived for county records.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMMERSIVE K9 FIELD MEDICINE POPUP -->
+    <div id="modalK9Med" class="intel-modal">
+        <div class="modal-header"><div class="modal-title">🐾 TAC-MED: K9 FIELD TRAUMA REGISTER</div><div class="modal-close" onclick="closeIntelModal('modalK9Med')">×</div></div>
+        <div class="modal-body">
+            <div class="med-section"><div class="med-title">1. K9 CPR & AIRWAY BLOCKAGES</div><div>Lay dog on right side. Clear muzzle of debris/froth. Close muzzle with hands, blow directly into nose twice. Compress chest wall behind elbow 15 times. Cycle continuously.</div></div>
+            <div class="med-section"><div class="med-title">2. GUNSHOT WOUNDS & EXCESSIVE BLEEDING</div><div>Pack wounds tightly with sterile gauze. Apply hard, manual hand pressure for 5 minutes straight without checking. Bind with compression wrap.</div></div>
+            <div class="med-section"><div class="med-title">3. SNAKE BITES (THICK BRUSH ENVENOMATION)</div><div>Identify puncture points. Keep K9 strictly calm and immobilized. Flush with clean water. Do NOT apply suction. Advance immediately to vet.</div></div>
+            <div class="med-section"><div class="med-title">4. EYE & PAW INJURIES</div><div>Flush eyes with saline/water to clear thick brush briars. For torn pads/paws, apply clean protective dressing to prevent tracking contamination.</div></div>
+            <div class="med-section"><div class="med-title">5. HEAT EXHAUSTION PROTOCOLS</div><div>Heavy dark red tongue, glassy eyes. Flush paws and ears with cool water immediately. Apply fan. Do NOT plunge torso into ice water (causes shock).</div></div>
+            <div class="med-section" style="border-color:#eab308;"><div class="med-title">🏥 24-HOUR EMERGENCY REGIONAL VETERINARIANS</div>
+                <div style="margin-top:0.3rem; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:3px;">**Valley Emergency Vet Clinic:** (544) 555-0199 · Route 11 CP Grid Focus</div>
+                <div style="margin-top:0.3rem; font-size:0.75rem;">**Capital Veterinary Trauma Center:** (544) 555-0122 · 24-hr Command Support Row</div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map, tacticalPerimeterCircle;
@@ -332,6 +396,11 @@
         let distanceIntervalTimer = null;
         let assignedOperationalRole = "Field Searcher";
 
+        // Global registration identity structures
+        let registeredOperatorName = "";
+        let registeredOperatorAgency = "";
+        let registeredOperatorRank = "";
+
         function setOperationalRole(role) {
             assignedOperationalRole = role;
             document.getElementById('roleSearcher').classList.toggle('active', role === 'Field Searcher');
@@ -348,12 +417,18 @@
             if (agencyField.value.trim() === "") { agencyField.classList.add('error-field'); gateFault = true; }
             if (rankField.value.trim() === "") { rankField.classList.add('error-field'); gateFault = true; }
             if (gateFault) return;
-            document.getElementById('sheetOperatorName').innerText = `${nameField.value.trim()} (${assignedOperationalRole})`;
+
+            // Commit strings to system environment
+            registeredOperatorName = nameField.value.trim();
+            registeredOperatorAgency = agencyField.value.trim();
+            registeredOperatorRank = rankField.value.trim();
+
+            document.getElementById('sheetOperatorName').innerText = `${registeredOperatorName} (${assignedOperationalRole})`;
             switchScreen('screenMenu');
         }
 
-        function openIntelModal(id) { document.getElementById(screenId=id).style.display = 'flex'; }
-        function closeIntelModal(id) { document.getElementById(screenId=id).style.display = 'none'; }
+        function openIntelModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeIntelModal(id) { document.getElementById(id).style.display = 'none'; }
 
         function switchScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -371,7 +446,6 @@
 
         function initRealMap() {
             if (map) return;
-            // HIGH ALTITUDE COMMMAND VIEW: Pulls center baseline safely out to high wide visibility zoom level 14
             map = L.map('map', { center: mapCenter, zoom: 14, zoomControl: false, attributionControl: false });
             setMapType('satellite');
             tacticalPerimeterCircle = L.circle(mapCenter, { color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.12, weight: 3, radius: perimeterRadiusMeters }).addTo(map);
@@ -380,11 +454,8 @@
                 if (!isPenActive && !isRangeModeActive) return;
                 isDrawing = true;
                 currentGeoLinePoints = [e.latlng];
-                
-                let lineColor = isRangeModeActive ? '#ff6600' : '#dc2626'; // Shift vectors to heavy tactical orange
-                let lineWeight = isRangeModeActive ? 4 : 4;
-                
-                currentLeafletLine = L.polyline(currentGeoLinePoints, { color: lineColor, weight: lineWeight, lineCap: 'round' }).addTo(map);
+                let lineColor = isRangeModeActive ? '#ff6600' : '#dc2626';
+                currentLeafletLine = L.polyline(currentGeoLinePoints, { color: lineColor, weight: 4, lineCap: 'round' }).addTo(map);
             });
 
             map.on('mousemove', (e) => {
@@ -439,7 +510,6 @@
             rangeLineLayers.push(labelPopup);
         }
 
-        /* TOGGLE-TO-PURGE MODE SWITCH: Purges range line array vectors cleanly when deactivated */
         function toggleRangeTool() {
             isRangeModeActive = !isRangeModeActive;
             const btn = document.getElementById('btnRange');
@@ -451,7 +521,7 @@
             } else {
                 btn.classList.remove('active-mode');
                 map.dragging.enable();
-                // Sweep only range elements character-for-character
+                // Clear measurement lines cleanly while leaving others active
                 rangeLineLayers.forEach(layer => { if(map && layer) map.removeLayer(layer); });
                 rangeLineLayers = [];
             }
@@ -517,14 +587,7 @@
         }
 
         function toggleMapLock() { isMapLocked = !isMapLocked; const btn = document.getElementById('btnLock'); if (isMapLocked) { if (btn) btn.style.background = '#1d4ed8'; if (map) { map.dragging.disable(); map.touchZoom.disable(); map.doubleClickZoom.disable(); map.scrollWheelZoom.disable(); } } else { if (btn) btn.style.background = ''; if (map && !isPenActive && !isRangeModeActive) { map.dragging.enable(); map.touchZoom.enable(); map.doubleClickZoom.enable(); map.scrollWheelZoom.enable(); } } }
-        
-        function clearDrawings() { 
-            try { 
-                activeMapPolylines.forEach(l => { if(map && l) map.removeLayer(l); }); activeMapPolylines = []; 
-                rangeLineLayers.forEach(layer => { if(map && layer) map.removeLayer(layer); }); rangeLineLayers = [];
-            } catch(e) {} 
-        }
-        
+        function clearDrawings() { try { activeMapPolylines.forEach(l => { if(map && l) map.removeLayer(l); }); activeMapPolylines = []; rangeLineLayers.forEach(layer => { if(map && layer) map.removeLayer(layer); }); rangeLineLayers = []; } catch(e) {} }
         function clearMapAssets() { try { placedMarkers.forEach(m => { if(map && m) map.removeLayer(m); }); placedMarkers = []; } catch(e) {} }
         function selectAssetToPlace(type) { document.querySelectorAll('.asset-chip').forEach(chip => chip.classList.remove('selected')); if (selectedAssetType === type) { selectedAssetType = null; return; } selectedAssetType = type; const el = document.getElementById(`chip-${type}`); if (el) el.classList.add('selected'); }
 
@@ -554,8 +617,22 @@
         
         function setupOrientationCompass() { window.addEventListener('deviceorientation', (e) => { let heading = e.webkitCompassHeading || e.alpha; if(heading) { let angle = Math.round(heading); const read = document.getElementById('headingReadout'); const arr = document.getElementById('compassArrow'); if (read) read.innerText = String(angle).padStart(3, '0') + "°"; if (arr) arr.style.transform = `rotate(${angle}deg)`; } }, true); }
         function toggleNightVisionFilter() { nvgState = !nvgState; const filterLayer = document.getElementById('nvgGreenFilter'); const nvgBtn = document.getElementById('btnNVG'); if(nvgState) { if (filterLayer) filterLayer.style.display = 'block'; if (nvgBtn) { nvgBtn.style.background = '#22c55e'; nvgBtn.style.color = '#000'; } } else { if (filterLayer) filterLayer.style.display = 'none'; if (nvgBtn) { nvgBtn.style.background = ''; nvgBtn.style.color = '#22c55e'; } } }
-        function triggerOfficerEmergencyMatrixAlert() { document.getElementById('emergencyStrobe').style.display = 'block'; }
-        function resetOfficerEmergencyMatrixAlert() { document.getElementById('emergencyStrobe').style.display = 'none'; }
+        
+        /* LINKED EMERGENCY ALERT TELEMETRY DISPATCH */
+        function triggerOfficerEmergencyMatrixAlert() { 
+            document.getElementById('emergencyStrobe').style.display = 'block'; 
+            
+            // Render the signed-in operator identity details instantly into the flashing warning overlay card
+            const telemetryOutputStr = `NAME: ${registeredOperatorName}<br>AGENCY: ${registeredOperatorAgency}<br>CALL SIGN: ${registeredOperatorRank}<br>ROLE: ${assignedOperationalRole}`;
+            document.getElementById('emergencyCardTelemetryBody').innerHTML = telemetryOutputStr;
+            document.getElementById('operatorEmergencyHUDCard').style.display = 'block';
+        }
+        
+        function resetOfficerEmergencyMatrixAlert() { 
+            document.getElementById('emergencyStrobe').style.display = 'none'; 
+            document.getElementById('operatorEmergencyHUDCard').style.display = 'none';
+        }
+        
         function terminateSearch() { clearMapAssets(); clearDrawings(); switchScreen('screenSignIn'); }
         function setupDragScroll() { const drawer = document.querySelector('.asset-drawer'); let isDown = false; let startX; let scrollLeft; drawer.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - drawer.offsetLeft; scrollLeft = drawer.scrollLeft; }); drawer.addEventListener('mouseleave', () => { isDown = false; }); drawer.addEventListener('mouseup', () => { isDown = false; }); drawer.addEventListener('mousemove', (e) => { if(!isDown) return; e.preventDefault(); const x = e.pageX - drawer.offsetLeft; const walk = (x - startX) * 2; drawer.scrollLeft = scrollLeft - walk; }); }
     </script>
