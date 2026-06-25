@@ -1,30 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>TACNET COMMAND</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TACNET | Operational Command</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-        body { margin: 0; padding: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #064e3b; color: #fff; }
+        .screen { display: none; height: 100vh; width: 100%; position: relative; }
+        .screen.active { display: block; }
         #map { height: 100vh; width: 100vw; }
-        .hud-overlay { position: absolute; top: 10px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.7); padding: 15px; border: 1px solid #38bdf8; border-radius: 5px; }
+        
+        /* Tactical UI */
+        .hud-overlay { position: absolute; top: 10px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.8); padding: 15px; border: 2px solid #38bdf8; border-radius: 8px; }
+        .asset-drawer { position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(0,0,0,0.9); display: flex; padding: 10px; gap: 10px; z-index: 1000; border-radius: 5px; }
         .control-btn { background: #38bdf8; border: none; padding: 10px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id="map"></div>
-    <div class="hud-overlay">
-        <h3>TACNET OPERATIONAL MODE</h3>
-        <p>System Initialized: All Systems Green</p>
-        <button class="control-btn" onclick="location.reload()">RESET SYSTEM</button>
+
+    <div id="screenMap" class="screen active">
+        <div id="map"></div>
+        <div class="hud-overlay">
+            <h3>TACNET COMMAND</h3>
+            <button class="control-btn" onclick="location.reload()">RESET SYSTEM</button>
+        </div>
+        <div class="asset-drawer">
+            <button onclick="console.log('K9 Placed')">K9</button>
+            <button onclick="console.log('LE Placed')">LE</button>
+            <button onclick="console.log('SAR Placed')">SAR</button>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // THE CORE MAPPING ENGINE - NO EXTRA LAYERS TO HIDE YOUR VIEW
         const map = L.map('map').setView([37.5407, -77.4360], 15);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
         
-        console.log("TACNET: READY FOR DEMO");
+        // Perimeter Logic
+        let perimeter = L.circle([37.5407, -77.4360], { color: '#f97316', radius: 500 }).addTo(map);
+        
+        console.log("TACNET: SYSTEM READY");
     </script>
 </body>
 </html>
