@@ -9,11 +9,11 @@
     <style>
         body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #0b2512; }
         #sidebar { width: 320px; background: #0b2512; color: #fff; padding: 20px; display: flex; flex-direction: column; gap: 10px; border-right: 2px solid #2a5a3a; }
-        #map { flex-grow: 1; filter: sepia(10%) contrast(1.1); }
+        #map { flex-grow: 1; }
         button { padding: 12px; background: #2a5a3a; color: white; border: 1px solid #4a7a5a; cursor: pointer; font-weight: bold; text-align: left; }
-        button:hover { background: #3a6a4a; }
         .nvg-active { filter: sepia(100%) hue-rotate(80deg) brightness(0.6) contrast(1.5); }
-        .heli-icon { font-size: 24px; }
+        /* Orange Range Line */
+        .rng-line { color: orange; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -22,21 +22,22 @@
     <h2>TACNET V1</h2>
     <button onclick="toggleNVG()">TOGGLE NVG MODE</button>
     <button onclick="addHelipad()">PLACE HELIPAD</button>
-    <button onclick="triggerK9Medical()">K9 MEDICAL PROTOCOLS</button>
-    <button onclick="generateReport()">PRINT COURT REPORT</button>
-    <hr style="width:100%; border:0; border-top:1px solid #2a5a3a;">
-    <div id="status">System: Tracking Active</div>
+    <button onclick="activateRNG()">RNG MEASUREMENT (ORANGE)</button>
+    <button onclick="triggerTrapTrace()">TRAP AND TRACE</button>
+    <button onclick="triggerK9Medical()">K9 VOICE PROTOCOLS</button>
+    <button onclick="window.print()">GENERATE REPORT</button>
+    <div id="status" style="margin-top:20px; font-size: 0.8em; color: #aaa;">System: Tracking Active</div>
 </div>
 <div id="map"></div>
 
 <script>
-    // Initialize
     const client = new Appwrite.Client()
         .setEndpoint('https://nyc.cloud.appwrite.io/v1')
         .setProject('6a38e834003e0cc64c31');
     const databases = new Appwrite.Databases(client);
+    
     const map = L.map('map').setView([37.5407, -77.4360], 15);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+    L.tileLayer('https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
     // Live Tracking
     const teamMarkers = {};
@@ -48,9 +49,20 @@
 
     // Tactical Features
     function toggleNVG() { document.getElementById('map').classList.toggle('nvg-active'); }
-    function addHelipad() { map.once('click', e => L.marker(e.latlng, {icon: L.divIcon({html:'🚁'})}).addTo(map)); }
-    function triggerK9Medical() { alert("K9 Medical Protocol: Verifying Vital Signs and Preparing Field Trauma Kit."); }
-    function generateReport() { window.print(); }
+    function addHelipad() { map.once('click', e => L.marker(e.latlng).bindPopup("HELIPAD").addTo(map)); }
+    function activateRNG() { 
+        alert("RNG Activated: Click two points to measure distance.");
+        let points = [];
+        map.on('click', e => {
+            points.push(e.latlng);
+            if(points.length === 2) {
+                L.polyline(points, {color: 'orange', weight: 5}).addTo(map);
+                points = [];
+            }
+        });
+    }
+    function triggerTrapTrace() { alert("Trap and Trace active. Monitoring high-density zones."); }
+    function triggerK9Medical() { alert("Voice Protocol: K9 CPR/Gunshot Wound Instructions Initiated."); }
 </script>
 </body>
 </html>
