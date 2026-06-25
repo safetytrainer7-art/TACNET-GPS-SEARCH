@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TACNET - Live Field Operations Platform</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        /* MOBILE PHONE HYPER-OPTIMIZATION & FIXED HEIGHT PREVENTING OVERFLOW */
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        body, html { 
+            width: 100%; 
+            height: 100%; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #020208; 
+            color: #f8fafc; 
+            overflow: hidden;
+            position: fixed;
+            touch-action: none;
+        }
+
+        /* SCREEN MANAGEMENT */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+            background-color: #020208;
+        }
+        
+        #screenLanding { display: flex !important; z-index: 20; }
+        .screen.active { display: flex !important; z-index: 30; }
+
+        /* REGRID HUNTER GREEN BACKDROP */
+        .landing-backdrop-pure {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #052216 0%, #010206 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .homepage-branding-container {
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            padding: 2.5rem 1.5rem;
+            background: rgba(15, 23, 42, 0.4);
+            border: 2px solid rgba(34, 197, 94, 0.2);
+            border-radius: 12px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(34, 197, 94, 0.05);
+            position: relative;
+        }
+
+        .homepage-branding-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(to bottom, rgba(34, 197, 94, 0.1) 0%, transparent 100%);
+            animation: radar-sweep 3s infinite linear;
+            pointer-events: none;
+        }
+
+        .branding-title-glow {
+            font-size: 3.2rem;
+            font-weight: 900;
+            letter-spacing: 6px;
+            color: #ffffff;
+            text-align: center;
+            text-shadow: 0 0 30px rgba(34, 197, 94, 0.6);
+            margin-bottom: 0.25rem;
+        }
+
+        .branding-subtitle-gold {
+            font-size: 0.85rem;
+            color: #eab308;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(234, 179, 8, 0.2);
+            padding-bottom: 1rem;
+        }
+
+        .advance-prompt-box {
+            background: #1d4ed8;
+            border: 1px solid #60a5fa;
+            padding: 0.9rem 1.5rem;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(29, 78, 216, 0.4);
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .advance-prompt-text {
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        /* REGRID MAP EXPANSION WORKSPACE */
+        .map-wrapper { 
+            position: relative; 
+            flex-grow: 1; 
+            width: 100%; 
+            height: 100%;
+            background: #020617; 
+        }
+        #map { width: 100%; height: 100%; z-index: 2; }
+
+        .regrid-floating-topnav {
+            position: absolute;
+            top: 12px; left: 12px; right: 12px;
+            height: 48px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 6px;
+            padding: 0 0.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .nav-arrow { 
+            font-size: 1.8rem !important; 
+            font-weight: 900 !important; 
+            color: #22c55e !important; 
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            display: flex;
+            align-items: center;
+            text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+            text-decoration: none;
+            padding-right: 0.2rem;
+        }
+
+        .map-toggle-btn { padding: 0.4rem 0.5rem; font-size: 0.65rem; background: #334155; border: 1px solid #475569; color: #cbd5e1; font-weight: 800; border-radius: 4px; text-transform: uppercase; }
+        .map-toggle-btn.active { background: #1d4ed8; border-color: #3b82f6; color: #fff; }
+        .search-box-container { flex-grow: 1; display: flex; gap: 0.2rem; min-width: 0; }
+        .search-input { flex-grow: 1; min-width: 0; padding: 0.4rem; background: #000; border: 1px solid #475569; color: #fff; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+        .btn-clear-now { background: #475569; border: 1px solid #64748b; color: #fff; padding: 0 0.4rem; font-weight: 800; border-radius: 4px; font-size: 0.6rem; text-transform: uppercase; height: 30px; cursor: pointer; }
+        .btn-go { background: #059669; border: none; color: #fff; padding: 0 0.5rem; font-weight: 800; border-radius: 4px; font-size: 0.75rem; height: 30px; }
+
+        /* DRAWER FOR TOKENS */
+        .asset-drawer {
+            height: 60px;
+            background: #0f172a;
+            border-top: 2px solid rgba(255,255,255,0.1);
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            padding: 0 0.75rem;
+            gap: 0.65rem;
+            flex-shrink: 0;
+            z-index: 40;
+            -webkit-overflow-scrolling: touch; 
+            touch-action: pan-x; 
+        }
+        .asset-drawer::-webkit-scrollbar { display: none; }
+
+        .bottom-deck { 
+            height: 105px; 
+            background: #020617; 
+            display: flex; 
+            flex-direction: column; 
+            flex-shrink: 0;
+            padding-bottom: env(safe-area-inset-bottom); 
+            z-index: 50;
+        }
+
+        /* BASELINE INSTRUMENT ARRAY ROW */
+        .baseline-instrument-cluster {
+            position: absolute;
+            bottom: 12px; left: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 99;
+            pointer-events: none;
+        }
+
+        .compass-deck {
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid rgba(56, 189, 248, 0.4);
+            border-radius: 6px;
+            padding: 0.4rem 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.6);
+            font-family: monospace; font-size: 0.8rem; font-weight: 900; color: #38bdf8;
+            pointer-events: auto;
+            height: 42px;
+        }
+
+        .trap-trace-hud {
+            background: rgba(2, 2, 8, 0.95);
+            border: 2px solid #eab308;
+            padding: 0.35rem 0.6rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.65rem;
+            color: #eab308;
+            text-align: left;
+            font-weight: 900;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.6);
+            line-height: 1.2;
+            pointer-events: auto;
+            height: 42px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 175px;
+        }
+
+        .compass-arrow {
+            width: 24px; height: 24px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2338bdf8"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>') no-repeat center;
+            background-size: contain;
+            transition: transform 0.15s ease;
+        }
+
+        /* MANUAL RANGE ENGINE CONTROLS */
+        .perimeter-manual-deck {
+            position: absolute;
+            top: 72px; left: 12px;
+            background: #0f172a;
+            border: 2px solid rgba(255,255,255,0.15);
+            padding: 0.4rem 0.5rem;
+            border-radius: 6px;
+            display: flex; 
+            flex-direction: column;
+            align-items: center;
+            z-index: 99;
+            gap: 0.3rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .perimeter-manual-deck label { font-size: 0.55rem; font-weight: 900; text-transform: uppercase; color: #94a3b8; text-align: center; }
+        .perimeter-readout { font-size: 0.65rem; font-family: monospace; font-weight: 800; color: #22c55e; background: #000; padding: 0.15rem 0.3rem; border-radius: 3px; border: 1px solid #334155; }
+        .step-btn {
+            width: 36px; height: 36px;
+            background: #1e293b; border: 1px solid #475569;
+            color: #fff; font-size: 1.2rem; font-weight: bold;
+            border-radius: 4px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .step-btn:active { background: #1d4ed8; border-color: #3b82f6; }
+
+        .map-sidebar {
+            position: absolute;
+            top: 72px; right: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            z-index: 99;
+        }
+        .tool-btn {
+            width: 38px; height: 40px;
+            border-radius: 6px;
+            background: #0f172a;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            color: #fff; font-size: 0.55rem; font-weight: 900;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .tool-btn.pen-active { background: #b91c1c !important; border-color: #f87171 !important; color: #fff !important; }
+
+        .asset-chip {
+            display: inline-flex; 
+            align-items: center; 
+            gap: 0.4rem;
+            background: rgba(255,255,255,0.06); 
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 0.45rem 0.75rem; 
+            border-radius: 24px;
+            white-space: nowrap; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .asset-chip.selected { background: #1d4ed8; border-color: #38bdf8; }
+        
+        /* HARDCODED PRESENTATION DOT CODES */
+        .tac-marker { 
+            border-radius: 50% !important; 
+            border: 2px solid #ffffff !important; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.8) !important;
+            pointer-events: auto !important;
+        }
+        .user-gps-dot { 
+            background: #f43f5e !important; 
+            border: 2px solid #ffffff !important;
+            box-shadow: 0 0 14px #f43f5e !important; 
+            border-radius: 50% !important;
+            width: 16px !important;
+            height: 16px !important;
+        }
+
+        .dot-k9 { background: #00eaff !important; }
+        .dot-le { background: #0022ff !important; }
+        .dot-vsp { background: #0022ff !important; box-shadow: 0 0 6px #ffffff !important; }
+        .dot-feds { background: #475569 !important; border-color: #eab308 !important; }
+        .dot-sar { background: #ff0000 !important; }
+        .dot-civ { background: #00ff00 !important; }
+        .dot-sus { background: #cc00ff !important; }
+        .dot-victim { background: #ffffff !important; border-color: #000000 !important; }
+        .dot-boat { background: #000000 !important; border-color: #ffff00 !important; }
+        .dot-cap-boat { background: #000000 !important; border-color: #ff5500 !important; }
+        .dot-veh { background: #000000 !important; border-color: #ffffff !important; }
+        .dot-drone { background: #888888 !important; }
+        .dot-art { background: #ff7700 !important; }
+        .dot-cp { background: #ffff00 !important; border-color: #ff0000 !important; border-radius: 0% !important; }
+
+        .emergency-row { width: 100%; height: 50px; padding: 0.25rem; display: flex; gap: 0.25rem; }
+        .btn-emergency {
+            flex-grow: 1; height: 100%; background: #dc2626; color: #fff;
+            border: none; font-weight: 900; font-size: 0.95rem; text-transform: uppercase;
+            animation: pulse-red 1.2s infinite linear; border-radius: 4px;
+        }
+        .btn-emergency-reset { width: 70px; height: 100%; background: #475569; border: 1px solid #64748b; color: #fff; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; border-radius: 4px; }
+        
+        .control-row { width: 100%; height: 42px; display: flex; }
+        .btn-deck { flex: 1; height: 100%; border: none; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-deck.clear { background: #475569; border-right: 1px solid rgba(0,0,0,0.4); }
+        .btn-deck.terminate { background: #7f1d1d; }
+
+        #emergencyStrobe {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: rgba(220,38,38,0.4); z-index: 999;
+            pointer-events: none; display: none;
+            animation: flash-strobe 0.25s infinite alternate;
+        }
+
+        .night-vision-green {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 255, 30, 0.18); z-index: 999; pointer-events: none; display: none;
+            mix-blend-mode: color-burn; box-shadow: inset 0 0 120px rgba(0, 255, 0, 0.6);
+        }
+
+        .hardware-warning-banner {
+            position: absolute; top: 72px; left: 50%; transform: translateX(-50%);
+            background: rgba(127, 29, 29, 0.95); border: 2px solid #ef4444; padding: 0.5rem 1rem;
+            border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: #fca5a5; z-index: 200;
+            display: none; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 85%; max-width: 320px;
+        }
+
+        @keyframes radar-sweep {
+            0% { background: linear-gradient(to bottom, rgba(34, 197, 94, 0.15) 0%, transparent 0%); }
+            100% { background: linear-gradient(to bottom, transparent 0%, rgba(34, 197, 94, 0.15) 100%); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="emergencyStrobe"></div>
+    <div id="gpsWarningBanner" class="hardware-warning-banner">
+        ⚠️ HARDWARE LIMIT: Internal location services off. Click "FIND ME" to manually step path.
+    </div>
+
+    <div id="screenLanding" class="screen">
+        <div class="landing-backdrop-pure">
+            <div class="homepage-branding-container">
+                <h1 class="branding-title-glow">TACNET</h1>
+                <p class="branding-subtitle-gold">Multi-Agency Tactical Command Network</p>
+                <div class="advance-prompt-box" onclick="switchScreen('screenMap')">
+                    <p class="advance-prompt-text">Initialize Command Terminal</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="screenMap" class="screen">
+        <div class="regrid-floating-topnav">
+            <div class="nav-arrow" onclick="switchScreen('screenLanding')">← Out</div>
+            <button id="btnSat" class="map-toggle-btn active" onclick="setMapType('satellite')">Sat</button>
+            <button id="btnTerr" class="map-toggle-btn" onclick="setMapType('terrain')">Terr</button>
+            <div class="search-box-container">
+                <input type="text" id="mapSearch" class="search-input" placeholder="Address / Track Phone...">
+                <button class="btn-go" onclick="executeAddressSearch()">GO</button>
+            </div>
+            <button class="btn-clear-now" onclick="clearMapAssets()">Clear Now</button>
+        </div>
+
+        <div class="map-wrapper" id="mapWrapper">
+            <div id="map"></div>
+            <div id="nvgGreenFilter" class="night-vision-green"></div>
+
+            <div id="commanderPerimeterDeck" class="perimeter-manual-deck">
+                <label>Perimeter</label>
+                <div id="radiusReadout" class="perimeter-readout">500m</div>
+                <button class="step-btn" onclick="adjustPerimeterManual(100)">+</button>
+                <button class="step-btn" onclick="adjustPerimeterManual(-100)">-</button>
+            </div>
+
+            <div class="baseline-instrument-cluster">
+                <div class="compass-deck">
+                    <div id="compassArrow" class="compass-arrow"></div>
+                    <div>HDG: <span id="headingReadout">000°</span></div>
+                </div>
+                <div id="trapTraceHUD" class="trap-trace-hud">
+                    📡 CELLULAR TRACE ENGAGED:<br>
+                    <span id="traceStatusText" style="color: #fff; font-size:0.55rem;">INITIALIZING TOWERS...</span>
+                </div>
+            </div>
+
+            <div class="map-sidebar">
+                <button id="btnPen" class="tool-btn" onclick="toggleRedPen()">PEN</button>
+                <button class="tool-btn" onclick="clearDrawings()">ERASE</button>
+                <button class="tool-btn" style="color:#f43f5e;" onclick="forceManualGPSTrigger()">FIND ME</button>
+                <button id="btnLock" class="tool-btn" onclick="toggleMapLock()">LOCK</button>
+                <button id="btnNVG" class="tool-btn" style="color:#22c55e;" onclick="toggleNightVisionFilter()">NVG</button>
+            </div>
+        </div>
+
+        <div class="asset-drawer">
+            <div id="chip-k9" class="asset-chip" onclick="selectAssetToPlace('k9')"><span class="dot-k9" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>K9 Team</div>
+            <div id="chip-le" class="asset-chip" onclick="selectAssetToPlace('le')"><span class="dot-le" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>LE Blue</div>
+            <div id="chip-vsp" class="asset-chip" onclick="selectAssetToPlace('vsp')"><span class="dot-vsp" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>VSP State</div>
+            <div id="chip-feds" class="asset-chip" onclick="selectAssetToPlace('feds')"><span class="dot-feds" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>Feds Gold</div>
+            <div id="chip-sar" class="asset-chip" onclick="selectAssetToPlace('sar')"><span class="dot-sar" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>SAR Red</div>
+            <div id="chip-civ" class="asset-chip" onclick="selectAssetToPlace('civ')"><span class="dot-civ" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>Civ Green</div>
+            <div id="chip-sus" class="asset-chip" onclick="selectAssetToPlace('sus')"><span class="dot-sus" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>Suspect</div>
+            <div id="chip-victim" class="asset-chip" onclick="selectAssetToPlace('victim')"><span class="dot-victim" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>Victim</div>
+            <div id="chip-boat" class="asset-chip" onclick="selectAssetToPlace('boat')"><span class="dot-boat" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>Boat</div>
+            <div id="chip-cap-boat" class="asset-chip" onclick="selectAssetToPlace('cap-boat')"><span class="dot-cap-boat" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>Capsized</div>
+            <div id="chip-veh" class="asset-chip" onclick="selectAssetToPlace('veh')"><span class="dot-veh" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>Vehicle</div>
+            <div id="chip-drone" class="asset-chip" onclick="selectAssetToPlace('drone')"><span class="dot-drone" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>Drone</div>
+            <div id="chip-art" class="asset-chip" onclick="selectAssetToPlace('art')"><span class="dot-art" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>Article</div>
+            <div id="chip-cp" class="asset-chip" onclick="selectAssetToPlace('cp')"><span class="dot-cp" style="width:10px; height:10px; display:inline-block; margin-right:4px;"></span>Command P.</div>
+        </div>
+
+        <div class="bottom-deck">
+            <div class="emergency-row">
+                <button class="btn-emergency" onclick="triggerEmergencyAlert()">🚨 OFFICER EMERGENCY ALERT</button>
+                <button class="btn-emergency-reset" onclick="resetEmergencyAlert()">Reset</button>
+            </div>
+            <div class="control-row">
+                <div class="btn-deck clear" style="width:50%; background:#475569;" onclick="clearMapAssets()">Clear Now</div>
+                <div class="btn-deck terminate" style="width:50%; background:#7f1d1d;" onclick="terminateSearch()">Terminate Search</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script script="text/javascript">
+        let map, tacticalPerimeterCircle;
+        let mapCenter = [37.5407, -77.4360]; 
+        let userLocationMarker = null;
+        let gpsWatchId = null;
+        let isMapLocked = false;
+        let isPenActive = false;
+        let isDrawing = false;
+        let nvgState = false;
+        let perimeterRadiusMeters = 500;
+        let placedMarkers = [];
+        let selectedAssetType = null;
+        let activeMapPolylines = [];
+        let currentGeoLinePoints = [];
+        let currentLeafletLine = null;
+        let traceHUDInterval = null;
+        let simulatedStepCounter = 0;
+
+        window.addEventListener('load', () => {
+            switchScreen('screenLanding');
+            setupOrientationCompass();
+            setupDragScroll();
+        });
+
+        function setupDragScroll() {
+            const drawer = document.querySelector('.asset-drawer');
+            let isDown = false; let startX; let scrollLeft;
+            drawer.addEventListener('mousedown', (e) => {
+                isDown = true; startX = e.pageX - drawer.offsetLeft; scrollLeft = drawer.scrollLeft;
+            });
+            drawer.addEventListener('mouseleave', () => { isDown = false; });
+            drawer.addEventListener('mouseup', () => { isDown = false; });
+            drawer.addEventListener('mousemove', (e) => {
+                if(!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - drawer.offsetLeft;
+                const walk = (x - startX) * 2;
+                drawer.scrollLeft = scrollLeft - walk;
+            });
+        }
+
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(screenId);
+            if (target) target.classList.add('active');
+            if(screenId === 'screenMap') {
+                setTimeout(() => {
+                    initRealMap();
+                    if(map) map.invalidateSize();
+                    trackUserGPS();
+                    startTrapTraceSimulation();
+                }, 150);
+            } else { stopTrapTraceSimulation(); }
+        }
+
+        function initRealMap() {
+            if (map) return;
+            map = L.map('map', { center: mapCenter, zoom: 18, zoomControl: false, attributionControl: false });
+            setMapType('satellite');
+
+            tacticalPerimeterCircle = L.circle(mapCenter, { color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.12, weight: 3, radius: perimeterRadiusMeters }).addTo(map);
+
+            map.on('mousedown', (e) => {
+                if (!isPenActive) return;
+                isDrawing = true;
+                currentGeoLinePoints = [e.latlng];
+                currentLeafletLine = L.polyline(currentGeoLinePoints, { color: '#dc2626', weight: 4, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+            });
+            map.on('mousemove', (e) => {
+                if (!isDrawing || !isPenActive || !currentLeafletLine) return;
+                currentGeoLinePoints.push(e.latlng);
+                currentLeafletLine.setLatLngs(currentGeoLinePoints);
+            });
+            map.on('mouseup', () => {
+                if (!isDrawing) return;
+                isDrawing = false;
+                if (currentLeafletLine) activeMapPolylines.push(currentLeafletLine);
+                currentLeafletLine = null;
+            });
+            map.on('click', (e) => {
+                if (isPenActive) return;
+                if (selectedAssetType) executeManualAssetPlacement(e.latlng.lat, e.latlng.lng, selectedAssetType);
+            });
+        }
+
+        function startTrapTraceSimulation() {
+            const strings = ["SCANNING TOWERS...", "TRACKING PINGS...", "TRIANGULATING...", "LOCKING COORDS..."];
+            let idx = 0;
+            traceHUDInterval = setInterval(() => {
+                const el = document.getElementById("traceStatusText");
+                if (el) el.innerText = strings[idx % strings.length];
+                idx++;
+            }, 4000);
+        }
+        function stopTrapTraceSimulation() { if(traceHUDInterval) clearInterval(traceHUDInterval); }
+
+        function adjustPerimeterManual(amount) {
+            perimeterRadiusMeters += amount;
+            if (perimeterRadiusMeters < 100) perimeterRadiusMeters = 100;
+            if (perimeterRadiusMeters > 5000) perimeterRadiusMeters = 5000;
+            if (tacticalPerimeterCircle) tacticalPerimeterCircle.setRadius(perimeterRadiusMeters);
+            document.getElementById('radiusReadout').innerText = perimeterRadiusMeters + "m";
+        }
+
+        function toggleRedPen() {
+            isPenActive = !isPenActive;
+            const btn = document.getElementById('btnPen');
+            if (isPenActive) { btn.classList.add('pen-active'); map.dragging.disable(); } 
+            else { btn.classList.remove('pen-active'); if(!isMapLocked) map.dragging.enable(); }
+        }
+
+        function toggleMapLock() {
+            isMapLocked = !isMapLocked;
+            const btn = document.getElementById('btnLock');
+            if (isMapLocked) {
+                if (btn) btn.style.background = '#1d4ed8';
+                if (map) { map.dragging.disable(); map.touchZoom.disable(); map.doubleClickZoom.disable(); map.scrollWheelZoom.disable(); }
+            } else {
+                if (btn) btn.style.background = '';
+                if (map && !isPenActive) { map.dragging.enable(); map.touchZoom.enable(); map.doubleClickZoom.enable(); map.scrollWheelZoom.enable(); }
+            }
+        }
+
+        function clearDrawings() { 
+            try {
+                activeMapPolylines.forEach(l => { if(map && l) map.removeLayer(l); }); 
+                activeMapPolylines = []; 
+            } catch(e) {}
+        }
+        
+        function clearMapAssets() { 
+            try {
+                placedMarkers.forEach(m => { if(map && m) map.removeLayer(m); }); 
+                placedMarkers = []; 
+            } catch(e) {}
+        }
+
+        function selectAssetToPlace(type) { 
+            document.querySelectorAll('.asset-chip').forEach(chip => chip.classList.remove('selected'));
+            if (selectedAssetType === type) { selectedAssetType = null; return; }
+            selectedAssetType = type; 
+            const el = document.getElementById(`chip-${type}`);
+            if (el) el.classList.add('selected');
+        }
+
+        /* 100% OPERATIONAL ONE-TAP PURGE LOOP ENGINE */
+        function executeManualAssetPlacement(lat, lng, type) {
+            const tokenIcon = L.divIcon({ 
+                className: `tac-marker dot-${type}`, 
+                iconSize: [16, 16], 
+                iconAnchor: [8, 8] 
+            });
+            const markerInstance = L.marker([lat, lng], { icon: tokenIcon }).addTo(map);
+            
+            // Immediate deletion on touch
+            markerInstance.on('click', (event) => {
+                L.DomEvent.stopPropagation(event); 
+                map.removeLayer(markerInstance);
+                placedMarkers = placedMarkers.filter(m => m !== markerInstance);
+            });
+            
+            placedMarkers.push(markerInstance); 
+            selectAssetToPlace(null);
+        }
+
+        function setMapType(type) {
+            if (!map) return;
+            map.eachLayer((l) => { if (l instanceof L.TileLayer) map.removeLayer(l); });
+            if (type === 'satellite') {
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+            } else {
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map);
+            }
+        }
+
+        /* PRESENTATION OVERRIDE ENGINE: Simulates real-time walking paces indoors */
+        function forceManualGPSTrigger() {
+            simulatedStepCounter += 1;
+            let latShift = mapCenter[0];
+            let lngShift = mapCenter[1] + (simulatedStepCounter * 0.00015);
+            let temporaryMockCoordinates = [latShift, lngShift];
+            
+            if (map) {
+                map.setView(temporaryMockCoordinates, map.getZoom());
+                if (!userLocationMarker) {
+                    const gpsIcon = L.divIcon({ className: 'user-gps-dot', iconSize: [16, 16], iconAnchor: [8, 8] });
+                    userLocationMarker = L.marker(temporaryMockCoordinates, { icon: gpsIcon }).addTo(map);
+                } else { 
+                    userLocationMarker.setLatLng(temporaryMockCoordinates); 
+                }
+                if (tacticalPerimeterCircle) {
+                    tacticalPerimeterCircle.setLatLng(temporaryMockCoordinates);
+                    tacticalPerimeterCircle.setRadius(perimeterRadiusMeters);
+                }
+            }
+        }
+
+        /* HARD ACCURACY TRACKING MAP SYNC LOOPS */
+        function trackUserGPS() {
+            if (!navigator.geolocation) return;
+            if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+
+            gpsWatchId = navigator.geolocation.watchPosition((p) => {
+                document.getElementById('gpsWarningBanner').style.display = 'none';
+                let coords = [p.coords.latitude, p.coords.longitude];
+                mapCenter = coords;
+                
+                if (!userLocationMarker) {
+                    const gpsIcon = L.divIcon({ className: 'user-gps-dot', iconSize: [16, 16], iconAnchor: [8, 8] });
+                    userLocationMarker = L.marker(coords, { icon: gpsIcon }).addTo(map);
+                } else { userLocationMarker.setLatLng(coords); }
+                
+                if (map && !isMapLocked) {
+                    map.setView(coords, map.getZoom());
+                }
+                if (tacticalPerimeterCircle) {
+                    tacticalPerimeterCircle.setLatLng(coords);
+                    tacticalPerimeterCircle.setRadius(perimeterRadiusMeters);
+                }
+            }, () => {
+                document.getElementById('gpsWarningBanner').style.display = 'block';
+                if (map && !isMapLocked) {
+                    map.setView(mapCenter, map.getZoom());
+                }
+                if (tacticalPerimeterCircle) {
+                    tacticalPerimeterCircle.setLatLng(mapCenter);
+                    tacticalPerimeterCircle.setRadius(perimeterRadiusMeters);
+                }
+            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        }
+        
+        function setupOrientationCompass() {
+            window.addEventListener('deviceorientation', (e) => {
+                let heading = e.webkitCompassHeading || e.alpha;
+                if(heading) {
+                    let angle = Math.round(heading);
+                    const read = document.getElementById('headingReadout');
+                    const arr = document.getElementById('compassArrow');
+                    if (read) read.innerText = String(angle).padStart(3, '0') + "°";
+                    if (arr) arr.style.transform = `rotate(${angle}deg)`;
+                }
+            }, true);
+        }
+
+        function toggleNightVisionFilter() {
+            nvgState = !nvgState;
+            const filterLayer = document.getElementById('nvgGreenFilter');
+            const nvgBtn = document.getElementById('btnNVG');
+            if(nvgState) {
+                if (filterLayer) filterLayer.style.display = 'block';
+                if (nvgBtn) { nvgBtn.style.background = '#22c55e'; nvgBtn.style.color = '#000'; }
+            } else {
+                if (filterLayer) filterLayer.style.display = 'none';
+                if (nvgBtn) { nvgBtn.style.background = ''; nvgBtn.style.color = '#22c55e'; }
+            }
+        }
+
+        function terminateSearch() { clearMapAssets(); clearDrawings(); switchScreen('screenLanding'); }
+        function executeAddressSearch() {}
+        function triggerEmergencyAlert() { const el = document.getElementById('emergencyStrobe'); if(el) el.style.display = 'block'; }
+        function resetEmergencyAlert() { const el = document.getElementById('emergencyStrobe'); if(el) el.style.display = 'none'; }
+    </script>
+</body>
+</html>
