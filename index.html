@@ -1,63 +1,35 @@
-<!-- Master Tactical Script -->
-<script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TACNET Command</title>
+    <!-- CSS: This forces the map to be visible -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
+        #map { height: 100vh; width: 100%; }
+    </style>
+</head>
+<body>
 
-<script>
-    // 1. Appwrite Setup (Your IDs plugged in)
-    const client = new Appwrite.Client()
-        .setEndpoint('https://nyc.cloud.appwrite.io/v1')
-        .setProject('6a38e834003e0cc64c31');
-    const databases = new Appwrite.Databases(client);
+    <!-- This is the container Leaflet needs -->
+    <div id="map"></div>
 
-    const DB_ID = 'tacnet_telemetry_db';
-    const COL_ID = 'tacnet_live_units';
+    <!-- SDKs -->
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    // 2. Core Map & Tracking Engine
-    let map = L.map('map').setView([37.5407, -77.4360], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    
-    let teamMarkers = {};
+    <script>
+        // 1. Initialize Map
+        const map = L.map('map').setView([37.5407, -77.4360], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    function startLiveTracking(myCallSign) {
-        // Broadcast local position every 3 seconds
-        navigator.geolocation.watchPosition(pos => {
-            const { latitude, longitude } = pos.coords;
-            databases.updateDocument(DB_ID, COL_ID, myCallSign, {
-                lat: latitude,
-                lng: longitude,
-                callSign: myCallSign
-            });
-        }, null, { enableHighAccuracy: true });
-
-        // Stream all other units
-        client.subscribe(`databases.${DB_ID}.collections.${COL_ID}.documents`, res => {
-            const unit = res.payload;
-            if (unit.callSign === myCallSign) return;
-
-            if (teamMarkers[unit.callSign]) {
-                teamMarkers[unit.callSign].setLatLng([unit.lat, unit.lng]);
-            } else {
-                teamMarkers[unit.callSign] = L.marker([unit.lat, unit.lng]).addTo(map).bindPopup(unit.callSign);
-            }
-        });
-    }
-
-    // 3. Tactical UI Overlay Functions
-    function setNVG(color) {
-        document.getElementById('map').style.filter = (color === 'green') 
-            ? 'sepia(100%) hue-rotate(80deg) brightness(0.6)' 
-            : 'invert(100%) hue-rotate(180deg)';
-    }
-
-    function generateCourtReport() {
-        const reportWindow = window.open('', '_blank');
-        reportWindow.document.write(`
-            <style>body { font-family: sans-serif; }</style>
-            <h1>TACNET Incident Log</h1>
-            <table border="1" width="100%">
-                ${window.historicalLogs.map(l => `<tr><td>${l.time}</td><td>${l.text}</td></tr>`).join('')}
-            </table>
-            <button onclick="window.print()">PRINT TO PDF</button>
-        `);
-    }
-</script>
+        // 2. Initialize Appwrite
+        const { Client, Databases } = Appwrite;
+        const client = new Client()
+            .setEndpoint('https://nyc.cloud.appwrite.io/v1')
+            .setProject('6a38e834003e0cc64c31');
+        
+        console.log("TACNET Initialized");
+    </script>
+</body>
+</html>
