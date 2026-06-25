@@ -12,8 +12,8 @@
         #map { flex-grow: 1; }
         button { padding: 12px; background: #2a5a3a; color: white; border: 1px solid #4a7a5a; cursor: pointer; font-weight: bold; text-align: left; }
         .nvg-active { filter: sepia(100%) hue-rotate(80deg) brightness(0.6) contrast(1.5); }
-        /* Orange Range Line */
-        .rng-line { color: orange; font-weight: bold; }
+        /* Legend Styles */
+        .legend { background: white; color: black; padding: 10px; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -39,7 +39,16 @@
     const map = L.map('map').setView([37.5407, -77.4360], 15);
     L.tileLayer('https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-    // Live Tracking
+    // 1. Searcher Legend (Standardized Colors)
+    const legend = L.control({position: 'bottomright'});
+    legend.onAdd = function() {
+        const div = L.DomUtil.create('div', 'legend');
+        div.innerHTML = '<b>Unit Legend</b><br>🟢 K9<br>🔵 Water Rescue<br>🔴 Fire/Rescue';
+        return div;
+    };
+    legend.addTo(map);
+
+    // 2. Real-Time Tracking
     const teamMarkers = {};
     client.subscribe('databases.tacnet_telemetry_db.collections.tacnet_live_units.documents', res => {
         const u = res.payload;
@@ -47,22 +56,25 @@
         else teamMarkers[u.$id] = L.marker([u.lat, u.lng]).addTo(map).bindPopup(u.callSign);
     });
 
-    // Tactical Features
-    function toggleNVG() { document.getElementById('map').classList.toggle('nvg-active'); }
-    function addHelipad() { map.once('click', e => L.marker(e.latlng).bindPopup("HELIPAD").addTo(map)); }
-    function activateRNG() { 
-        alert("RNG Activated: Click two points to measure distance.");
+    // 3. Orange RNG Tool (Auto-Measuring)
+    function activateRNG() {
         let points = [];
         map.on('click', e => {
             points.push(e.latlng);
             if(points.length === 2) {
-                L.polyline(points, {color: 'orange', weight: 5}).addTo(map);
+                const dist = points[0].distanceTo(points[1]).toFixed(0);
+                L.polyline(points, {color: 'orange', weight: 5}).addTo(map)
+                 .bindPopup("Distance: " + dist + " meters").openPopup();
                 points = [];
+                map.off('click');
             }
         });
     }
-    function triggerTrapTrace() { alert("Trap and Trace active. Monitoring high-density zones."); }
-    function triggerK9Medical() { alert("Voice Protocol: K9 CPR/Gunshot Wound Instructions Initiated."); }
+
+    function toggleNVG() { document.getElementById('map').classList.toggle('nvg-active'); }
+    function addHelipad() { map.once('click', e => L.marker(e.latlng).bindPopup("HELIPAD").addTo(map)); }
+    function triggerTrapTrace() { alert("Trap and Trace active."); }
+    function triggerK9Medical() { alert("Voice Protocol: K9 trauma instructions initiated."); }
 </script>
 </body>
 </html>
