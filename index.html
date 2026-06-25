@@ -1,84 +1,63 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TACNET | Operational Command</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #064e3b; color: #fff; }
-        .screen { display: none; height: 100vh; width: 100%; position: relative; }
-        .screen.active { display: block; }
-        #map { height: 100vh; width: 100vw; }
-        
-        .hud-overlay { position: absolute; top: 10px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.8); padding: 15px; border: 2px solid #38bdf8; border-radius: 8px; }
-        .asset-drawer { position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(0,0,0,0.9); display: flex; padding: 10px; gap: 10px; z-index: 1000; border-radius: 5px; }
-        .control-btn { background: #38bdf8; border: none; padding: 10px; cursor: pointer; font-weight: bold; }
-        .error-field { border: 2px solid red; }
-        #nvgGreenFilter { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(34, 197, 94, 0.2); pointer-events: none; z-index: 999; display: none; }
-    </style>
-</head>
-<body>
+<!-- Master Tactical Script -->
+<script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <div id="screenMap" class="screen active">
-        <div id="nvgGreenFilter"></div>
-        <div id="map"></div>
-        <div class="hud-overlay">
-            <h3>TACNET COMMAND</h3>
-            <button class="control-btn" onclick="location.reload()">RESET SYSTEM</button>
-            <div id="headingReadout">000°</div>
-        </div>
-        <div class="asset-drawer">
-            <button onclick="console.log('K9 Placed')">K9</button>
-            <button onclick="console.log('LE Placed')">LE</button>
-            <button onclick="console.log('SAR Placed')">SAR</button>
-        </div>
-    </div>
+<script>
+    // 1. Appwrite Setup (Your IDs plugged in)
+    const client = new Appwrite.Client()
+        .setEndpoint('https://nyc.cloud.appwrite.io/v1')
+        .setProject('6a38e834003e0cc64c31');
+    const databases = new Appwrite.Databases(client);
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        let map, gpsWatchId, userLocationMarker, tacticalPerimeterCircle;
-        let mapCenter = [37.5407, -77.4360];
-        let perimeterRadiusMeters = 500;
-        let historicalLogs = [], placedMarkers = [], activeMapPolylines = [];
-        let isPenActive = false, isDrawing = false, selectedAssetType = null, isMapLocked = false, nvgState = false;
+    const DB_ID = 'tacnet_telemetry_db';
+    const COL_ID = 'tacnet_live_units';
 
-        function switchScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            const target = document.getElementById(screenId);
-            if (target) target.classList.add('active');
-            if(screenId === 'screenMap') { setTimeout(() => { initRealMap(); if(map) map.invalidateSize(); trackUserGPS(); }, 150); }
-        }
+    // 2. Core Map & Tracking Engine
+    let map = L.map('map').setView([37.5407, -77.4360], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    
+    let teamMarkers = {};
 
-        function initRealMap() {
-            if (map) return;
-            map = L.map('map', { center: mapCenter, zoom: 18, zoomControl: false, attributionControl: false });
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
-            
-            tacticalPerimeterCircle = L.circle(mapCenter, { color: '#f97316', fillColor: '#f97316', fillOpacity: 0.12, weight: 3, radius: perimeterRadiusMeters }).addTo(map);
+    function startLiveTracking(myCallSign) {
+        // Broadcast local position every 3 seconds
+        navigator.geolocation.watchPosition(pos => {
+            const { latitude, longitude } = pos.coords;
+            databases.updateDocument(DB_ID, COL_ID, myCallSign, {
+                lat: latitude,
+                lng: longitude,
+                callSign: myCallSign
+            });
+        }, null, { enableHighAccuracy: true });
 
-            map.on('mousedown', (e) => { if (!isPenActive) return; isDrawing = true; currentGeoLinePoints = [e.latlng]; currentLeafletLine = L.polyline(currentGeoLinePoints, { color: '#dc2626', weight: 4 }).addTo(map); });
-            map.on('mousemove', (e) => { if (!isDrawing || !isPenActive) return; currentGeoLinePoints.push(e.latlng); currentLeafletLine.setLatLngs(currentGeoLinePoints); });
-            map.on('mouseup', () => { isDrawing = false; });
-            map.on('click', (e) => { if (!isPenActive && selectedAssetType) executeManualAssetPlacement(e.latlng.lat, e.latlng.lng, selectedAssetType); });
-        }
+        // Stream all other units
+        client.subscribe(`databases.${DB_ID}.collections.${COL_ID}.documents`, res => {
+            const unit = res.payload;
+            if (unit.callSign === myCallSign) return;
 
-        function trackUserGPS() {
-            if (!navigator.geolocation) return;
-            gpsWatchId = navigator.geolocation.watchPosition((pos) => {
-                const coords = [pos.coords.latitude, pos.coords.longitude];
-                if (!userLocationMarker) { userLocationMarker = L.marker(coords).addTo(map); map.setView(coords, 18); }
-                else { userLocationMarker.setLatLng(coords); if (!isMapLocked) map.setView(coords, map.getZoom()); }
-            }, null, { enableHighAccuracy: true });
-        }
+            if (teamMarkers[unit.callSign]) {
+                teamMarkers[unit.callSign].setLatLng([unit.lat, unit.lng]);
+            } else {
+                teamMarkers[unit.callSign] = L.marker([unit.lat, unit.lng]).addTo(map).bindPopup(unit.callSign);
+            }
+        });
+    }
 
-        function logEvent(message) {
-            const timestamp = new Date().toLocaleTimeString();
-            historicalLogs.unshift({ time: timestamp, text: message });
-            console.log(`[${timestamp}] ${message}`);
-        }
+    // 3. Tactical UI Overlay Functions
+    function setNVG(color) {
+        document.getElementById('map').style.filter = (color === 'green') 
+            ? 'sepia(100%) hue-rotate(80deg) brightness(0.6)' 
+            : 'invert(100%) hue-rotate(180deg)';
+    }
 
-        window.onload = initRealMap;
-    </script>
-</body>
-</html>
+    function generateCourtReport() {
+        const reportWindow = window.open('', '_blank');
+        reportWindow.document.write(`
+            <style>body { font-family: sans-serif; }</style>
+            <h1>TACNET Incident Log</h1>
+            <table border="1" width="100%">
+                ${window.historicalLogs.map(l => `<tr><td>${l.time}</td><td>${l.text}</td></tr>`).join('')}
+            </table>
+            <button onclick="window.print()">PRINT TO PDF</button>
+        `);
+    }
+</script>
