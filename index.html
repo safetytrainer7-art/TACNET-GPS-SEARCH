@@ -1,24 +1,53 @@
-// 1. Define the layers
-const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-});
 
-const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles © Esri'
-});
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TACNET Command Center</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; }
+        #sidebar { width: 300px; background: #0b2512; color: #fff; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        #map { flex-grow: 1; }
+        button { padding: 12px; background: #2a5a3a; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .nvg-active { filter: sepia(100%) hue-rotate(80deg) brightness(0.6); }
+    </style>
+</head>
+<body>
 
-// 2. Initialize the map with one default layer
-const map = L.map('map', {
-    center: [37.5407, -77.4360], 
-    zoom: 15,
-    layers: [streetLayer]
-});
+<div id="sidebar">
+    <h2>TACNET V1</h2>
+    <button onclick="toggleNVG()">TOGGLE NVG MODE</button>
+    <button onclick="addHelipad()">PLACE HELIPAD</button>
+    <button onclick="window.print()">PRINT REPORT</button>
+    <p id="status">System: Standby</p>
+</div>
+<div id="map"></div>
 
-// 3. Define the menu options
-const baseMaps = {
-    "Streets": streetLayer,
-    "Satellite": satelliteLayer
-};
+<script>
+    // Configuration
+    const client = new Appwrite.Client()
+        .setEndpoint('https://nyc.cloud.appwrite.io/v1')
+        .setProject('6a38e834003e0cc64c31');
+    const databases = new Appwrite.Databases(client);
 
-// 4. Add the toggle control (this creates the button in the top-right)
-L.control.layers(baseMaps).addTo(map);
+    // Map Setup
+    const map = L.map('map').setView([37.5407, -77.4360], 15);
+    const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+
+    // Live Tracking Logic
+    const teamMarkers = {};
+    client.subscribe('databases.tacnet_telemetry_db.collections.tacnet_live_units.documents', res => {
+        const u = res.payload;
+        if(teamMarkers[u.$id]) teamMarkers[u.$id].setLatLng([u.lat, u.lng]);
+        else teamMarkers[u.$id] = L.marker([u.lat, u.lng]).addTo(map).bindPopup(u.callSign);
+        document.getElementById('status').innerText = "System: Active - Tracking Units";
+    });
+
+    function toggleNVG() { document.getElementById('map').classList.toggle('nvg-active'); }
+    function addHelipad() { map.once('click', e => L.marker(e.latlng).bindPopup("HELIPAD").addTo(map)); }
+</script>
+</body>
+</html>
