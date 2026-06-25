@@ -1,35 +1,24 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>TACNET Command</title>
-    <!-- CSS: This forces the map to be visible -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
-        #map { height: 100vh; width: 100%; }
-    </style>
-</head>
-<body>
+// 1. Define the different map styles (Layers)
+const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+});
 
-    <!-- This is the container Leaflet needs -->
-    <div id="map"></div>
+const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © Esri'
+});
 
-    <!-- SDKs -->
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+// 2. Initialize the map with the Street layer active by default
+const map = L.map('map', {
+    center: [37.5407, -77.4360], 
+    zoom: 15,
+    layers: [streetLayer] // Sets the default view
+});
 
-    <script>
-        // 1. Initialize Map
-        const map = L.map('map').setView([37.5407, -77.4360], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+// 3. Create a group for the layers
+const baseMaps = {
+    "Streets": streetLayer,
+    "Satellite": satelliteLayer
+};
 
-        // 2. Initialize Appwrite
-        const { Client, Databases } = Appwrite;
-        const client = new Client()
-            .setEndpoint('https://nyc.cloud.appwrite.io/v1')
-            .setProject('6a38e834003e0cc64c31');
-        
-        console.log("TACNET Initialized");
-    </script>
-</body>
-</html>
+// 4. Add the Layer Control button to the map
+L.control.layers(baseMaps).addTo(map);
