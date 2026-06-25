@@ -1,90 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TACNET | Operational Command</title>
+    <title>TACNET COMMAND</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-        /* CORE PROFESSIONAL DARK HUNTER GREEN LAYOUT */
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: #064e3b; color: #fff; }
-        .screen { display: none; height: 100vh; width: 100%; position: relative; }
-        .screen.active { display: block; }
-        
-        /* MAP STYLING */
-        #map { height: 100%; width: 100%; z-index: 1; }
-        .map-topnav { height: 50px; background: rgba(6, 78, 59, 0.95); display: flex; align-items: center; padding: 0 10px; border-bottom: 2px solid #065f46; z-index: 1000; }
-        
-        /* HUD ELEMENTS */
-        .night-vision-green { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(34, 197, 94, 0.2); pointer-events: none; z-index: 999; display: none; }
-        .compass-deck { position: absolute; top: 70px; right: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; font-size: 0.7rem; z-index: 500; }
-        .perimeter-manual-deck { position: absolute; bottom: 120px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; z-index: 500; display: flex; flex-direction: column; }
-        
-        /* ASSET DRAWER */
-        .asset-drawer { position: absolute; bottom: 50px; width: 100%; display: flex; overflow-x: auto; padding: 5px; background: rgba(0,0,0,0.8); z-index: 600; }
-        .asset-chip { min-width: 70px; padding: 5px; background: #111827; margin-right: 5px; border-radius: 4px; font-size: 0.6rem; text-align: center; cursor: pointer; }
-        .asset-chip.selected { border: 2px solid #f59e0b; }
-
-        /* EMERGENCY STROBE */
-        #emergencyStrobe { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(220, 38, 38, 0.6); z-index: 9999; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
+        body { margin: 0; padding: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
+        #map { height: 100vh; width: 100vw; }
+        .hud-overlay { position: absolute; top: 10px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.7); padding: 15px; border: 1px solid #38bdf8; border-radius: 5px; }
+        .control-btn { background: #38bdf8; border: none; padding: 10px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
-
-    <!-- PRIMARY MAP WORKSPACE -->
-    <div id="screenMap" class="screen active">
-        <div class="map-topnav">
-            <button onclick="console.log('Navigating...')">←</button>
-            <div id="map"></div>
-        </div>
-        
-        <div id="nvgGreenFilter" class="night-vision-green"></div>
-        
-        <div class="compass-deck">
-            HDG: <span id="headingReadout">000°</span>
-        </div>
-
-        <div id="commanderPerimeterDeck" class="perimeter-manual-deck">
-            <label>Perimeter</label>
-            <div id="radiusReadout">500m</div>
-            <button onclick="adjustPerimeter(100)">+</button>
-            <button onclick="adjustPerimeter(-100)">-</button>
-        </div>
-
-        <div class="asset-drawer" id="assetDrawer">
-            <!-- Asset chips populated by logic -->
-        </div>
+    <div id="map"></div>
+    <div class="hud-overlay">
+        <h3>TACNET OPERATIONAL MODE</h3>
+        <p>System Initialized: All Systems Green</p>
+        <button class="control-btn" onclick="location.reload()">RESET SYSTEM</button>
     </div>
-
-    <div id="emergencyStrobe"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map;
-        let perimeterRadius = 500;
-        let tacticalCircle;
-
-        function initApp() {
-            map = L.map('map').setView([37.5407, -77.4360], 15);
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
-            
-            tacticalCircle = L.circle([37.5407, -77.4360], {
-                color: '#f97316', // ORANGE PER REQUEST
-                weight: 3,
-                radius: perimeterRadius
-            }).addTo(map);
-
-            console.log("TACNET INITIALIZED - READY FOR DEMO");
-        }
-
-        function adjustPerimeter(val) {
-            perimeterRadius += val;
-            tacticalCircle.setRadius(perimeterRadius);
-            document.getElementById('radiusReadout').innerText = perimeterRadius + "m";
-        }
-
-        window.onload = initApp;
+        // THE CORE MAPPING ENGINE - NO EXTRA LAYERS TO HIDE YOUR VIEW
+        const map = L.map('map').setView([37.5407, -77.4360], 15);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+        
+        console.log("TACNET: READY FOR DEMO");
     </script>
 </body>
 </html>
