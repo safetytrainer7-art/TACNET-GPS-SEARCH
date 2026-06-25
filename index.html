@@ -18,51 +18,65 @@
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 10; background-color: #020208; }
         
         /* PRESENTATION SEQUENCE INITIAL ENTRY ROUTE */
-        #screenLanding { display: flex !important; z-index: 40; cursor: pointer; }
+        #screenLanding { display: flex !important; z-index: 40; }
         .screen.active { display: flex !important; z-index: 30; }
 
-        /* REWORKED BULLETPROOF FLAT LAYERING BACKGROUND CHANNELS */
+        /* DOUBLE-EXT BALANCED BACKDROP INTERFACE MATCH */
         .backdrop {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9)), 
+            background: linear-gradient(rgba(2, 6, 23, 0.75), rgba(15, 23, 42, 0.9)), 
                         url('IMAGE FOR TAC.png2.jpg'),
-                        linear-gradient(135deg, #041a10 0%, #010206 100%);
+                        linear-gradient(135deg, #041a10 0%, #020208 100%);
             background-size: cover; background-position: center; background-repeat: no-repeat;
             z-index: 1;
         }
 
+        /* FIXED PORTRAIT ENFORCEMENT FRAME LAYER */
         .landing-branding-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(2, 6, 23, 0.7), rgba(2, 2, 8, 0.9)), 
+            background: linear-gradient(rgba(2, 6, 23, 0.65), rgba(2, 2, 8, 0.9)), 
                         url('IMAGE FOR TAC.png2.jpg'),
                         linear-gradient(135deg, #052216 0%, #010206 100%);
             background-size: cover; background-position: center; background-repeat: no-repeat;
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1;
         }
 
-        /* COMPRESSED MICRO-TYPOGRAPHY SUITE FOR MOBILE PRESENTER VIEWPORTS */
+        /* CRITICAL GEOMETRY LOCK: Keeps dashboard tightly bound to portrait dimensions even in landscape windows */
+        .portrait-enforced-card {
+            width: 90%; max-width: 340px;
+            text-align: center; padding: 2rem 1.2rem;
+            background: rgba(15, 23, 42, 0.5);
+            border: 2px solid rgba(34, 197, 94, 0.2);
+            border-radius: 12px;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .portrait-enforced-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 10px; background: linear-gradient(to bottom, rgba(34, 197, 94, 0.12) 0%, transparent 100%);
+            animation: radar-sweep 3s infinite linear; pointer-events: none;
+        }
+
         .branding-title-glow {
-            font-size: 1.8rem !important; /* Heavily scaled down to prevent overflow line wrap */
-            font-weight: 900; letter-spacing: 4px; color: #ffffff; text-align: center;
-            text-shadow: 0 0 20px rgba(34, 197, 94, 0.6); margin-bottom: 0.25rem;
-            text-transform: uppercase;
+            font-size: 1.9rem !important; font-weight: 900; letter-spacing: 4px; color: #ffffff; text-align: center;
+            text-shadow: 0 0 20px rgba(34, 197, 94, 0.6); margin-bottom: 0.3rem; text-transform: uppercase;
         }
 
         .branding-subtitle-gold {
-            font-size: 0.65rem !important; /* Scaled cleanly for small mobile displays */
-            color: #eab308; font-weight: 800; text-transform: uppercase;
-            letter-spacing: 2px; text-align: center; margin-bottom: 2rem;
-            padding: 0 1.5rem; line-height: 1.3;
+            font-size: 0.65rem !important; color: #eab308; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 2px; text-align: center; margin-bottom: 2rem; line-height: 1.3;
         }
 
         .advance-prompt-box {
-            background: rgba(15, 23, 42, 0.95); border: 1.5px solid #eab308; padding: 0.65rem 1.2rem; border-radius: 4px;
-            box-shadow: 0 0 15px rgba(234, 179, 8, 0.3); text-align: center; width: 80%; max-width: 260px;
+            background: #1d4ed8; border: 1.5px solid #60a5fa; padding: 0.85rem 1.5rem; border-radius: 4px;
+            box-shadow: 0 4px 15px rgba(29, 78, 216, 0.4); text-align: center; width: 100%; cursor: pointer;
         }
 
-        .advance-prompt-text { color: #eab308; font-weight: 900; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+        .advance-prompt-text { color: #ffffff; font-weight: 900; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* SECURE PORTAL SHEET COMPONENT LAYOUTS */
+        /* PORTAL SHEET CONTAINER */
         .glass-panel {
             background: rgba(15, 23, 42, 0.95); border: 2px solid rgba(34, 197, 94, 0.3);
             backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
@@ -83,7 +97,7 @@
         .btn-danger { background: #7f1d1d; border-color: #f87171; margin-top: 0.5rem; }
         .menu-container { display: flex; flex-direction: column; gap: 0.6rem; width: 92%; max-width: 380px; margin: auto; z-index: 5; }
 
-        /* TILES MANAGEMENT HOVER DECKS */
+        /* INTEL DATASHEETS MODAL POPUPS */
         .hub-deck-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; width: 100%; margin-bottom: 0.5rem; }
         .hub-tile { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 0.75rem; text-align: center; cursor: pointer; }
         .hub-tile:active { background: rgba(29, 78, 216, 0.4); border-color: #3b82f6; }
@@ -101,7 +115,7 @@
         .replay-control-row { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
         .replay-btn { flex: 1; padding: 0.4rem; background: #0284c7; border: 1px solid #38bdf8; color: #fff; font-size: 0.65rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; text-align: center; cursor: pointer; }
 
-        /* EXPANDED SATELLITE VIEWPORT REGION */
+        /* REGRID MAP EXPANSION LAYOUTS */
         .map-wrapper { position: relative; flex-grow: 1; width: 100%; height: 100%; background: #020617; }
         #map { width: 100%; height: 100%; z-index: 2; }
 
@@ -182,7 +196,7 @@
         .hardware-warning-banner { position: absolute; top: 72px; left: 50%; transform: translateX(-50%); background: rgba(127, 29, 29, 0.95); border: 2px solid #ef4444; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: #fca5a5; z-index: 200; display: none; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 85%; max-width: 320px; }
 
         @keyframes flash-strobe { 0% { opacity: 0; } 100% { opacity: 1; } }
-        @keyframes pulse-gold { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        @keyframes radar-sweep { 0% { background: linear-gradient(to bottom, rgba(34, 197, 94, 0.15) 0%, transparent 0%); } 100% { background: linear-gradient(to bottom, transparent 0%, rgba(34, 197, 94, 0.15) 100%); } }
     </style>
 </head>
 <body>
@@ -192,18 +206,18 @@
         ⚠️ SENSOR LOCK: Direct satellite link buffering. Tap "FIND ME" to override manually.
     </div>
 
-    <!-- STAGE 1: BRANDING LANDING HOMEPAGE (SCALED DOWN FOR CLEAR DEVICE VIEWING) -->
-    <div id="screenLanding" class="screen" onclick="switchScreen('screenSignIn')">
+    <div id="screenLanding" class="screen">
         <div class="landing-branding-container">
-            <h1 class="branding-title-glow">TACNET</h1>
-            <p class="branding-subtitle-gold">Multi-Agency Tactical Command Network</p>
-            <div class="advance-prompt-box">
-                <p class="advance-prompt-text">Initialize Secure Portal</p>
+            <div class="portrait-enforced-card">
+                <h1 class="branding-title-glow">TACNET</h1>
+                <p class="branding-subtitle-gold">Multi-Agency Tactical Command Network</p>
+                <div class="advance-prompt-box" onclick="switchScreen('screenSignIn')">
+                    <p class="advance-prompt-text">Initialize Secure Portal</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- STAGE 2: PORTAL SHEET SECURITY GATEWAY SIGN-IN -->
     <div id="screenSignIn" class="screen">
         <div class="backdrop"></div>
         <div style="z-index: 5; margin-top: 2rem; margin-bottom: 0.5rem; text-align: center;">
@@ -226,7 +240,6 @@
         </div>
     </div>
 
-    <!-- STAGE 3: TACNET HUB MENU -->
     <div id="screenMenu" class="screen">
         <div class="backdrop"></div>
         <div style="z-index: 5; margin-top: 1.5rem; margin-bottom: 0.5rem; text-align: center;">
@@ -251,7 +264,6 @@
         </div>
     </div>
 
-    <!-- STAGE 4: ACTIVE REGRID EXPANDED MAP WORKSPACE -->
     <div id="screenMap" class="screen">
         <div id="operatorEmergencyHUDCard" class="emergency-identity-card">
             <div class="emergency-card-header">🚨 DOWN OPERATOR IDENTITY</div>
@@ -330,7 +342,6 @@
         </div>
     </div>
 
-    <!-- REPLAY INFRASTRUCTURE POPUPS -->
     <div id="modalReplay" class="intel-modal">
         <div class="modal-header"><div class="modal-title">⏱️ RECORDED MISSION REPLAY CONSOLE</div><div class="modal-close" onclick="closeIntelModal('modalReplay')">×</div></div>
         <div class="modal-body">
@@ -346,7 +357,6 @@
         </div>
     </div>
 
-    <!-- INCIDENT REPORTS ARCHIVE -->
     <div id="modalReports" class="intel-modal">
         <div class="modal-header"><div class="modal-title">📋 ACTIVE SYSTEM REPORT ARCHIVE</div><div class="modal-close" onclick="closeIntelModal('modalReports')">×</div></div>
         <div class="modal-body">
@@ -361,7 +371,6 @@
         </div>
     </div>
 
-    <!-- EMERGENCY MED SHEET REGISTER -->
     <div id="modalK9Med" class="intel-modal">
         <div class="modal-header"><div class="modal-title">🐾 TAC-MED: K9 FIELD TRAUMA REGISTER</div><div class="modal-close" onclick="closeIntelModal('modalK9Med')">×</div></div>
         <div class="modal-body">
@@ -402,18 +411,7 @@
         let registeredOperatorAgency = "";
         let registeredOperatorRank = "";
 
-        // CACHE FAULT INTERCEPTOR ENGINE: Bypasses image delays instantly to stop screen freezing
         window.addEventListener('load', () => {
-            document.getElementById('screenLanding').style.opacity = '1';
-            
-            // If background image stalls network, force render page contents in 400ms
-            setTimeout(() => {
-                const landing = document.getElementById('screenLanding');
-                if (landing && window.getComputedStyle(landing).display === 'flex') {
-                    console.log("Telemetry buffer optimized.");
-                }
-            }, 4000);
-            
             setupOrientationCompass();
             setupDragScroll();
         });
@@ -440,213 +438,4 @@
             registeredOperatorRank = rankField.value.trim();
 
             document.getElementById('sheetOperatorName').innerText = `${registeredOperatorName} (${assignedOperationalRole})`;
-            switchScreen('screenMenu');
-        }
-
-        function openIntelModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeIntelModal(id) { document.getElementById(id).style.display = 'none'; }
-
-        function switchScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            const target = document.getElementById(screenId);
-            if (target) target.classList.add('active');
-            if(screenId === 'screenMap') {
-                setTimeout(() => {
-                    initRealMap();
-                    if(map) map.invalidateSize();
-                    trackUserGPS();
-                    startRuralSeparationHUDTelemetry();
-                }, 150);
-            } else { stopRuralSeparationHUDTelemetry(); }
-        }
-
-        function initRealMap() {
-            if (map) return;
-            map = L.map('map', { center: mapCenter, zoom: 14, zoomControl: false, attributionControl: false });
-            setMapType('satellite');
-            tacticalPerimeterCircle = L.circle(mapCenter, { color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.12, weight: 3, radius: perimeterRadiusMeters }).addTo(map);
-
-            map.on('mousedown', (e) => {
-                if (!isPenActive && !isRangeModeActive) return;
-                isDrawing = true;
-                currentGeoLinePoints = [e.latlng];
-                let lineColor = isRangeModeActive ? '#ff6600' : '#dc2626';
-                currentLeafletLine = L.polyline(currentGeoLinePoints, { color: lineColor, weight: 4, lineCap: 'round' }).addTo(map);
-            });
-
-            map.on('mousemove', (e) => {
-                if (!isDrawing || !currentLeafletLine) return;
-                if (isRangeModeActive) {
-                    currentGeoLinePoints = [currentGeoLinePoints[0], e.latlng];
-                } else {
-                    currentGeoLinePoints.push(e.latlng);
-                }
-                currentLeafletLine.setLatLngs(currentGeoLinePoints);
-            });
-
-            map.on('mouseup', (e) => {
-                if (!isDrawing) return;
-                isDrawing = false;
-                if (currentLeafletLine) {
-                    if (isRangeModeActive) {
-                        calculateAndLabelVectorRange(currentGeoLinePoints[0], e.latlng, currentLeafletLine);
-                        rangeLineLayers.push(currentLeafletLine);
-                    } else {
-                        activeMapPolylines.push(currentLeafletLine);
-                    }
-                }
-                currentLeafletLine = null;
-            });
-
-            map.on('click', (e) => {
-                if (isPenActive || isRangeModeActive) return;
-                if (selectedAssetType) executeManualAssetPlacement(e.latlng.lat, e.latlng.lng, selectedAssetType);
-            });
-        }
-
-        function calculateAndLabelVectorRange(startPoint, endPoint, polylineLayer) {
-            let distanceMeters = startPoint.distanceTo(endPoint);
-            let distanceYards = Math.round(distanceMeters * 1.09361);
-            
-            let startDot = L.circleMarker(startPoint, { radius: 5, color: '#ff6600', fillColor: '#fff', fillOpacity: 1 }).addTo(map);
-            let endDot = L.circleMarker(endPoint, { radius: 5, color: '#ff6600', fillColor: '#fff', fillOpacity: 1 }).addTo(map);
-            rangeLineLayers.push(startDot, endDot);
-
-            let midLat = (startPoint.lat + endPoint.lat) / 2;
-            let midLng = (startPoint.lng + endPoint.lng) / 2;
-            
-            let labelPopup = L.popup({
-                closeButton: false, closeOnClick: false, autoClose: false,
-                className: 'range-popup-label', offset: [0, -5]
-            })
-            .setLatLng([midLat, midLng])
-            .setContent(`${distanceYards} YDS`)
-            .openOn(map);
-
-            rangeLineLayers.push(labelPopup);
-        }
-
-        function toggleRangeTool() {
-            isRangeModeActive = !isRangeModeActive;
-            const btn = document.getElementById('btnRange');
-            if (isRangeModeActive) {
-                isPenActive = false;
-                document.getElementById('btnPen').classList.remove('pen-active');
-                btn.classList.add('active-mode');
-                map.dragging.disable();
-            } else {
-                btn.classList.remove('active-mode');
-                map.dragging.enable();
-                rangeLineLayers.forEach(layer => { if(map && layer) map.removeLayer(layer); });
-                rangeLineLayers = [];
-            }
-        }
-
-        function startRuralSeparationHUDTelemetry() {
-            distanceIntervalTimer = setInterval(() => {
-                const hudElement = document.getElementById("traceStatusText");
-                if (!hudElement) return;
-
-                if (placedMarkers.length === 0 || !userLocationMarker) {
-                    hudElement.innerText = "STANDBY: DEPLOY FIELD CHIPS TO COMPUTE SPACING...";
-                    return;
-                }
-
-                let nearestDistance = Infinity;
-                let userPosition = userLocationMarker.getLatLng();
-
-                placedMarkers.forEach(marker => {
-                    let markerPosition = marker.getLatLng();
-                    let distanceMeters = userPosition.distanceTo(markerPosition);
-                    if (distanceMeters < nearestDistance) { nearestDistance = distanceMeters; }
-                });
-
-                let distanceYards = Math.round(nearestDistance * 1.09361);
-                
-                if (distanceYards < 40) {
-                    hudElement.innerHTML = `⚠️ CROSSFIRE WARNING:<br><span style="color:#ef4444; font-size:0.75rem;">NEAREST SEARCHER: ${distanceYards} YDS (SPREAD OUT)</span>`;
-                } else {
-                    hudElement.innerHTML = `🛡️ SECURE PROXIMITY SEPARATION:<br><span style="color:#22c55e; font-size:0.75rem;">TEAM FIELD INTERVAL: ${distanceYards} YDS CLEAR</span>`;
-                }
-            }, 2000);
-        }
-
-        function stopRuralSeparationHUDTelemetry() { if(distanceIntervalTimer) clearInterval(distanceIntervalTimer); }
-
-        function executeAddressSearch() {
-            const queryStr = document.getElementById('mapSearch').value.trim();
-            if (!queryStr) return;
-            const coordinateCheckMatch = queryStr.match(/^([-+]?\d+\.\d+)\s*,\s*([-+]?\d+\.\d+)$/);
-            if (coordinateCheckMatch) { updateActiveMapFocusPosition(parseFloat(coordinateCheckMatch[1]), parseFloat(coordinateCheckMatch[2])); return; }
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryStr)}&limit=1`)
-                .then(res => res.json()).then(data => { if (data && data.length > 0) { updateActiveMapFocusPosition(parseFloat(data[0].lat), parseFloat(data[0].lon)); } }).catch(() => {});
-        }
-
-        function updateActiveMapFocusPosition(lat, lng) {
-            const freshCoords = [lat, lng]; mapCenter = freshCoords;
-            if (map) {
-                map.setView(freshCoords, 14);
-                if (tacticalPerimeterCircle) { tacticalPerimeterCircle.setLatLng(freshCoords); tacticalPerimeterCircle.setRadius(perimeterRadiusMeters); }
-                if (!userLocationMarker) { userLocationMarker = L.marker(freshCoords, { icon: L.divIcon({ className: 'user-gps-dot', iconSize: [16, 16], iconAnchor: [8, 8] }) }).addTo(map); } else { userLocationMarker.setLatLng(freshCoords); }
-            }
-        }
-
-        function snapFocusToUserGPS() { if (map) map.setView(mapCenter, map.getZoom()); }
-        function startNewSearch() { clearMapAssets(); clearDrawings(); perimeterRadiusMeters = 500; if (tacticalPerimeterCircle) { tacticalPerimeterCircle.setRadius(perimeterRadiusMeters); } document.getElementById('radiusReadout').innerText = perimeterRadiusMeters + "m"; switchScreen('screenMap'); }
-        function adjustPerimeterManual(amount) { perimeterRadiusMeters += amount; if (perimeterRadiusMeters < 100) perimeterRadiusMeters = 100; if (perimeterRadiusMeters > 5000) perimeterRadiusMeters = 5000; if (tacticalPerimeterCircle) tacticalPerimeterCircle.setRadius(perimeterRadiusMeters); document.getElementById('radiusReadout').innerText = perimeterRadiusMeters + "m"; }
-        
-        function toggleRedPen() {
-            isPenActive = !isPenActive; const btn = document.getElementById('btnPen');
-            if (isPenActive) { isRangeModeActive = false; document.getElementById('btnRange').classList.remove('active-mode'); btn.classList.add('pen-active'); map.dragging.disable(); } 
-            else { btn.classList.remove('pen-active'); map.dragging.enable(); }
-        }
-
-        function toggleMapLock() { isMapLocked = !isMapLocked; const btn = document.getElementById('btnLock'); if (isMapLocked) { if (btn) btn.style.background = '#1d4ed8'; if (map) { map.dragging.disable(); map.touchZoom.disable(); map.doubleClickZoom.disable(); map.scrollWheelZoom.disable(); } } else { if (btn) btn.style.background = ''; if (map && !isPenActive && !isRangeModeActive) { map.dragging.enable(); map.touchZoom.enable(); map.doubleClickZoom.enable(); map.scrollWheelZoom.enable(); } } }
-        function clearDrawings() { try { activeMapPolylines.forEach(l => { if(map && l) map.removeLayer(l); }); activeMapPolylines = []; rangeLineLayers.forEach(layer => { if(map && layer) map.removeLayer(layer); }); rangeLineLayers = []; } catch(e) {} }
-        function clearMapAssets() { try { placedMarkers.forEach(m => { if(map && m) map.removeLayer(m); }); placedMarkers = []; } catch(e) {} }
-        function selectAssetToPlace(type) { document.querySelectorAll('.asset-chip').forEach(chip => chip.classList.remove('selected')); if (selectedAssetType === type) { selectedAssetType = null; return; } selectedAssetType = type; const el = document.getElementById(`chip-${type}`); if (el) el.classList.add('selected'); }
-
-        function executeManualAssetPlacement(lat, lng, type) {
-            const tokenIcon = L.divIcon({ className: `tac-marker dot-${type}`, iconSize: [16, 16], iconAnchor: [8, 8] });
-            const markerInstance = L.marker([lat, lng], { icon: tokenIcon }).addTo(map);
-            markerInstance.on('click', (event) => { L.DomEvent.stopPropagation(event); map.removeLayer(markerInstance); placedMarkers = placedMarkers.filter(m => m !== markerInstance); });
-            placedMarkers.push(markerInstance); selectAssetToPlace(null);
-        }
-
-        function setMapType(type) { if (!map) return; map.eachLayer((l) => { if (l instanceof L.TileLayer) map.removeLayer(l); }); if (type === 'satellite') { L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map); } else { L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map); } }
-
-        function trackUserGPS() {
-            if (!navigator.geolocation) return; if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
-            gpsWatchId = navigator.geolocation.watchPosition((p) => {
-                document.getElementById('gpsWarningBanner').style.display = 'none';
-                let coords = [p.coords.latitude, p.coords.longitude]; mapCenter = coords;
-                if (!userLocationMarker) { userLocationMarker = L.marker(coords, { icon: L.divIcon({ className: 'user-gps-dot', iconSize: [16, 16], iconAnchor: [8, 8] }) }).addTo(map); } else { userLocationMarker.setLatLng(coords); }
-                if (map && !isMapLocked) { map.setView(coords, map.getZoom()); }
-                if (tacticalPerimeterCircle) { tacticalPerimeterCircle.setLatLng(coords); tacticalPerimeterCircle.setRadius(perimeterRadiusMeters); }
-            }, () => {
-                document.getElementById('gpsWarningBanner').style.display = 'block';
-                if (map && !isMapLocked) { map.setView(mapCenter, map.getZoom()); }
-                if (tacticalPerimeterCircle) { tacticalPerimeterCircle.setLatLng(mapCenter); tacticalPerimeterCircle.setRadius(perimeterRadiusMeters); }
-            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-        }
-        
-        function setupOrientationCompass() { window.addEventListener('deviceorientation', (e) => { let heading = e.webkitCompassHeading || e.alpha; if(heading) { let angle = Math.round(heading); const read = document.getElementById('headingReadout'); const arr = document.getElementById('compassArrow'); if (read) read.innerText = String(angle).padStart(3, '0') + "°"; if (arr) arr.style.transform = `rotate(${angle}deg)`; } }, true); }
-        function toggleNightVisionFilter() { nvgState = !nvgState; const filterLayer = document.getElementById('nvgGreenFilter'); const nvgBtn = document.getElementById('btnNVG'); if(nvgState) { if (filterLayer) filterLayer.style.display = 'block'; if (nvgBtn) { nvgBtn.style.background = '#22c55e'; nvgBtn.style.color = '#000'; } } else { if (filterLayer) filterLayer.style.display = 'none'; if (nvgBtn) { nvgBtn.style.background = ''; nvgBtn.style.color = '#22c55e'; } } }
-        
-        function triggerOfficerEmergencyMatrixAlert() { 
-            document.getElementById('emergencyStrobe').style.display = 'block'; 
-            const telemetryOutputStr = `NAME: ${registeredOperatorName}<br>AGENCY: ${registeredOperatorAgency}<br>CALL SIGN: ${registeredOperatorRank}<br>ROLE: ${assignedOperationalRole}`;
-            document.getElementById('emergencyCardTelemetryBody').innerHTML = telemetryOutputStr;
-            document.getElementById('operatorEmergencyHUDCard').style.display = 'block';
-        }
-        
-        function resetOfficerEmergencyMatrixAlert() { 
-            document.getElementById('emergencyStrobe').style.display = 'none'; 
-            document.getElementById('operatorEmergencyHUDCard').style.display = 'none';
-        }
-        
-        function terminateSearch() { clearMapAssets(); clearDrawings(); switchScreen('screenSignIn'); }
-        function setupDragScroll() { const drawer = document.querySelector('.asset-drawer'); let isDown = false; let startX; let scrollLeft; drawer.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - drawer.offsetLeft; scrollLeft = drawer.scrollLeft; }); drawer.addEventListener('mouseleave', () => { isDown = false; }); drawer.addEventListener('mouseup', () => { isDown = false; }); drawer.addEventListener('mousemove', (e) => { if(!isDown) return; e.preventDefault(); const x = e.pageX - drawer.offsetLeft; const walk = (x - startX) * 2; drawer.scrollLeft = scrollLeft - walk; }); }
-    </script>
-</body>
-</html>
+            switchScreen('
