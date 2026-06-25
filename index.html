@@ -2,53 +2,89 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TACNET | MULTI-AGENCY COMMAND</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TACNET | Operational Command</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; font-family: sans-serif; overflow: hidden; }
-        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 10; }
-        #s1 { display: flex; background: url('DDED.jpg') no-repeat center/cover; justify-content: center; align-items: center; }
-        #s2 { background: url('EEED.jpg') no-repeat center/cover; flex-direction: column; justify-content: center; align-items: center; }
-        #map { width: 100%; height: 100%; }
+        /* CORE PROFESSIONAL DARK HUNTER GREEN LAYOUT */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: #064e3b; color: #fff; }
+        .screen { display: none; height: 100vh; width: 100%; position: relative; }
+        .screen.active { display: block; }
         
-        /* Tactical HUD Elements */
-        .hud-overlay { position: absolute; top: 10px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; color: #fff; }
-        .btn-tac { background: #1e40af; color: white; padding: 15px 25px; border: 2px solid white; cursor: pointer; border-radius: 8px; font-weight: bold; }
+        /* MAP STYLING */
+        #map { height: 100%; width: 100%; z-index: 1; }
+        .map-topnav { height: 50px; background: rgba(6, 78, 59, 0.95); display: flex; align-items: center; padding: 0 10px; border-bottom: 2px solid #065f46; z-index: 1000; }
+        
+        /* HUD ELEMENTS */
+        .night-vision-green { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(34, 197, 94, 0.2); pointer-events: none; z-index: 999; display: none; }
+        .compass-deck { position: absolute; top: 70px; right: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; font-size: 0.7rem; z-index: 500; }
+        .perimeter-manual-deck { position: absolute; bottom: 120px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; z-index: 500; display: flex; flex-direction: column; }
+        
+        /* ASSET DRAWER */
+        .asset-drawer { position: absolute; bottom: 50px; width: 100%; display: flex; overflow-x: auto; padding: 5px; background: rgba(0,0,0,0.8); z-index: 600; }
+        .asset-chip { min-width: 70px; padding: 5px; background: #111827; margin-right: 5px; border-radius: 4px; font-size: 0.6rem; text-align: center; cursor: pointer; }
+        .asset-chip.selected { border: 2px solid #f59e0b; }
+
+        /* EMERGENCY STROBE */
+        #emergencyStrobe { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(220, 38, 38, 0.6); z-index: 9999; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <div id="s1" class="screen">
-        <button class="btn-tac" onclick="document.getElementById('s1').style.display='none'; document.getElementById('s2').style.display='flex';">INITIALIZE PORTAL</button>
-    </div>
+    <!-- PRIMARY MAP WORKSPACE -->
+    <div id="screenMap" class="screen active">
+        <div class="map-topnav">
+            <button onclick="console.log('Navigating...')">←</button>
+            <div id="map"></div>
+        </div>
+        
+        <div id="nvgGreenFilter" class="night-vision-green"></div>
+        
+        <div class="compass-deck">
+            HDG: <span id="headingReadout">000°</span>
+        </div>
 
-    <div id="s2" class="screen">
-        <h2 style="color:white;">COMMAND HUB</h2>
-        <button class="btn-tac" onclick="launchMap()">LAUNCH MAP MATRIX</button>
-    </div>
+        <div id="commanderPerimeterDeck" class="perimeter-manual-deck">
+            <label>Perimeter</label>
+            <div id="radiusReadout">500m</div>
+            <button onclick="adjustPerimeter(100)">+</button>
+            <button onclick="adjustPerimeter(-100)">-</button>
+        </div>
 
-    <div id="s3" class="screen">
-        <div id="map"></div>
-        <div class="hud-overlay">
-            <button onclick="alert('RNG Active: Measure Distance')">ORANGE RNG</button>
-            <button onclick="toggleMapLock()">MAP LOCK</button>
-            <button onclick="toggleNVG('green')">GREEN NVG</button>
-            <button onclick="toggleNVG('red')">RED NVG</button>
+        <div class="asset-drawer" id="assetDrawer">
+            <!-- Asset chips populated by logic -->
         </div>
     </div>
 
+    <div id="emergencyStrobe"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        function launchMap() {
-            document.getElementById('s2').style.display = 'none';
-            document.getElementById('s3').style.display = 'block';
-            var map = L.map('map').setView([37.5, -77.4], 14);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        let map;
+        let perimeterRadius = 500;
+        let tacticalCircle;
+
+        function initApp() {
+            map = L.map('map').setView([37.5407, -77.4360], 15);
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+            
+            tacticalCircle = L.circle([37.5407, -77.4360], {
+                color: '#f97316', // ORANGE PER REQUEST
+                weight: 3,
+                radius: perimeterRadius
+            }).addTo(map);
+
+            console.log("TACNET INITIALIZED - READY FOR DEMO");
         }
 
-        function toggleMapLock() { /* Logic for freezing map interaction */ }
-        function toggleNVG(color) { /* Toggle screen filter overlay */ }
+        function adjustPerimeter(val) {
+            perimeterRadius += val;
+            tacticalCircle.setRadius(perimeterRadius);
+            document.getElementById('radiusReadout').innerText = perimeterRadius + "m";
+        }
+
+        window.onload = initApp;
     </script>
 </body>
 </html>
