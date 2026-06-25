@@ -32,7 +32,6 @@
         #screenLanding { display: flex !important; z-index: 20; }
         .screen.active { display: flex !important; z-index: 30; }
 
-        /* REGRID HUNTER GREEN BACKDROP */
         .landing-backdrop-pure {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -136,26 +135,12 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
-        .nav-arrow { 
-            font-size: 1.8rem !important; 
-            font-weight: 900 !important; 
-            color: #22c55e !important; 
-            background: none; 
-            border: none; 
-            cursor: pointer; 
-            display: flex;
-            align-items: center;
-            text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
-            text-decoration: none;
-            padding-right: 0.2rem;
-        }
-
         .map-toggle-btn { padding: 0.4rem 0.5rem; font-size: 0.65rem; background: #334155; border: 1px solid #475569; color: #cbd5e1; font-weight: 800; border-radius: 4px; text-transform: uppercase; }
         .map-toggle-btn.active { background: #1d4ed8; border-color: #3b82f6; color: #fff; }
         .search-box-container { flex-grow: 1; display: flex; gap: 0.2rem; min-width: 0; }
-        .search-input { flex-grow: 1; min-width: 0; padding: 0.4rem; background: #000; border: 1px solid #475569; color: #fff; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+        .search-input { flex-grow: 1; min-width: 0; padding: 0.4rem; background: #000; border: 1px solid #475569; color: #fff; border-radius: 4px; font-size: 0.8rem; font-weight: 600; user-select: text !important; -webkit-user-select: text !important; }
         .btn-clear-now { background: #475569; border: 1px solid #64748b; color: #fff; padding: 0 0.4rem; font-weight: 800; border-radius: 4px; font-size: 0.6rem; text-transform: uppercase; height: 30px; cursor: pointer; }
-        .btn-go { background: #059669; border: none; color: #fff; padding: 0 0.5rem; font-weight: 800; border-radius: 4px; font-size: 0.75rem; height: 30px; }
+        .btn-go { background: #059669; border: none; color: #fff; padding: 0 0.5rem; font-weight: 800; border-radius: 4px; font-size: 0.75rem; height: 30px; cursor: pointer; }
 
         /* DRAWER FOR TOKENS */
         .asset-drawer {
@@ -187,7 +172,7 @@
             z-index: 50;
         }
 
-        /* BASELINE INSTRUMENT ARRAY ROW */
+        /* INSTRUMENT ROW PANEL */
         .baseline-instrument-cluster {
             position: absolute;
             bottom: 12px; left: 12px;
@@ -301,7 +286,6 @@
         }
         .asset-chip.selected { background: #1d4ed8; border-color: #38bdf8; }
         
-        /* HARDCODED PRESENTATION DOT CODES */
         .tac-marker { 
             border-radius: 50% !important; 
             border: 2px solid #ffffff !important; 
@@ -358,13 +342,6 @@
             mix-blend-mode: color-burn; box-shadow: inset 0 0 120px rgba(0, 255, 0, 0.6);
         }
 
-        .hardware-warning-banner {
-            position: absolute; top: 72px; left: 50%; transform: translateX(-50%);
-            background: rgba(127, 29, 29, 0.95); border: 2px solid #ef4444; padding: 0.5rem 1rem;
-            border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: #fca5a5; z-index: 200;
-            display: none; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 85%; max-width: 320px;
-        }
-
         @keyframes radar-sweep {
             0% { background: linear-gradient(to bottom, rgba(34, 197, 94, 0.15) 0%, transparent 0%); }
             100% { background: linear-gradient(to bottom, transparent 0%, rgba(34, 197, 94, 0.15) 100%); }
@@ -374,10 +351,8 @@
 <body>
 
     <div id="emergencyStrobe"></div>
-    <div id="gpsWarningBanner" class="hardware-warning-banner">
-        ⚠️ HARDWARE LIMIT: Internal location services off. Click "FIND ME" to manually step path.
-    </div>
 
+    <!-- STAGE 1: HIGH-END COMMAND TERMINAL HOMEPAGE SCREEN -->
     <div id="screenLanding" class="screen">
         <div class="landing-backdrop-pure">
             <div class="homepage-branding-container">
@@ -390,13 +365,15 @@
         </div>
     </div>
 
+    <!-- STAGE 2: ACTIVE MAP WORKSPACE LAYOUT -->
     <div id="screenMap" class="screen">
         <div class="regrid-floating-topnav">
             <div class="nav-arrow" onclick="switchScreen('screenLanding')">← Out</div>
             <button id="btnSat" class="map-toggle-btn active" onclick="setMapType('satellite')">Sat</button>
             <button id="btnTerr" class="map-toggle-btn" onclick="setMapType('terrain')">Terr</button>
             <div class="search-box-container">
-                <input type="text" id="mapSearch" class="search-input" placeholder="Address / Track Phone...">
+                <!-- ALLOWING TEXT SELECTION IN THE QUERY CONTROL FIELD -->
+                <input type="text" id="mapSearch" class="search-input" placeholder="Enter City, State or Coordinates...">
                 <button class="btn-go" onclick="executeAddressSearch()">GO</button>
             </div>
             <button class="btn-clear-now" onclick="clearMapAssets()">Clear Now</button>
@@ -413,6 +390,7 @@
                 <button class="step-btn" onclick="adjustPerimeterManual(-100)">-</button>
             </div>
 
+            <!-- COMPASS & CELLULAR TRAP-TRACE HUDS -->
             <div class="baseline-instrument-cluster">
                 <div class="compass-deck">
                     <div id="compassArrow" class="compass-arrow"></div>
@@ -424,15 +402,17 @@
                 </div>
             </div>
 
+            <!-- Side Toolbars overlaying vector grid elements -->
             <div class="map-sidebar">
                 <button id="btnPen" class="tool-btn" onclick="toggleRedPen()">PEN</button>
                 <button class="tool-btn" onclick="clearDrawings()">ERASE</button>
-                <button class="tool-btn" style="color:#f43f5e;" onclick="forceManualGPSTrigger()">FIND ME</button>
+                <button class="tool-btn" style="color:#f43f5e;" onclick="snapFocusToUserGPS()">FIND ME</button>
                 <button id="btnLock" class="tool-btn" onclick="toggleMapLock()">LOCK</button>
                 <button id="btnNVG" class="tool-btn" style="color:#22c55e;" onclick="toggleNightVisionFilter()">NVG</button>
             </div>
         </div>
 
+        <!-- SEARCH CHIP DRAWER -->
         <div class="asset-drawer">
             <div id="chip-k9" class="asset-chip" onclick="selectAssetToPlace('k9')"><span class="dot-k9" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>K9 Team</div>
             <div id="chip-le" class="asset-chip" onclick="selectAssetToPlace('le')"><span class="dot-le" style="width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px;"></span>LE Blue</div>
@@ -463,9 +443,9 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script script="text/javascript">
+    <script>
         let map, tacticalPerimeterCircle;
-        let mapCenter = [37.5407, -77.4360]; 
+        let mapCenter = [37.5407, -77.4360]; // Base Command CP fallback focus coordinates
         let userLocationMarker = null;
         let gpsWatchId = null;
         let isMapLocked = false;
@@ -479,7 +459,6 @@
         let currentGeoLinePoints = [];
         let currentLeafletLine = null;
         let traceHUDInterval = null;
-        let simulatedStepCounter = 0;
 
         window.addEventListener('load', () => {
             switchScreen('screenLanding');
@@ -559,6 +538,61 @@
         }
         function stopTrapTraceSimulation() { if(traceHUDInterval) clearInterval(traceHUDInterval); }
 
+        /* FIXED ADDRESS QUERY MATRIX INTERFACE LINK */
+        function executeAddressSearch() {
+            const queryStr = document.getElementById('mapSearch').value.trim();
+            if (!queryStr) return;
+
+            // Direct support for straight decimal coordinate inputs (Lat, Lng)
+            const coordinateCheckMatch = queryStr.match(/^([-+]?\d+\.\d+)\s*,\s*([-+]?\d+\.\d+)$/);
+            if (coordinateCheckMatch) {
+                const targetLat = parseFloat(coordinateCheckMatch[1]);
+                const targetLng = parseFloat(coordinateCheckMatch[2]);
+                updateActiveMapFocusPosition(targetLat, targetLng);
+                return;
+            }
+
+            // Fallback lookup via public OpenStreetMap location nodes
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryStr)}&limit=1`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const targetLat = parseFloat(data[0].lat);
+                        const targetLng = parseFloat(data[0].lon);
+                        updateActiveMapFocusPosition(targetLat, targetLng);
+                    } else { alert("Target search parameters unresolvable over current grid."); }
+                }).catch(() => { console.log("Network buffer latency."); });
+        }
+
+        /* FIXED: Force parameters to lock onto address target center without snapping back */
+        function updateActiveMapFocusPosition(lat, lng) {
+            const freshTargetCoordinates = [lat, lng];
+            mapCenter = freshTargetCoordinates; // Redefines base location anchor
+            
+            if (map) {
+                map.setView(freshTargetCoordinates, 18);
+                if (tacticalPerimeterCircle) {
+                    tacticalPerimeterCircle.setLatLng(freshTargetCoordinates);
+                    tacticalPerimeterCircle.setRadius(perimeterRadiusMeters);
+                }
+                
+                // Moves user marker baseline straight to target for desktop demo clarity
+                if (!userLocationMarker) {
+                    const gpsIcon = L.divIcon({ className: 'user-gps-dot', iconSize: [16, 16], iconAnchor: [8, 8] });
+                    userLocationMarker = L.marker(freshTargetCoordinates, { icon: gpsIcon }).addTo(map);
+                } else {
+                    userLocationMarker.setLatLng(freshTargetCoordinates);
+                }
+            }
+        }
+
+        /* FIXED: FIND ME snaps camera position tightly back to custom query marker point */
+        function snapFocusToUserGPS() { 
+            if (map) {
+                map.setView(mapCenter, 18); 
+            }
+        }
+
         function adjustPerimeterManual(amount) {
             perimeterRadiusMeters += amount;
             if (perimeterRadiusMeters < 100) perimeterRadiusMeters = 100;
@@ -608,7 +642,6 @@
             if (el) el.classList.add('selected');
         }
 
-        /* 100% OPERATIONAL ONE-TAP PURGE LOOP ENGINE */
         function executeManualAssetPlacement(lat, lng, type) {
             const tokenIcon = L.divIcon({ 
                 className: `tac-marker dot-${type}`, 
@@ -616,14 +649,11 @@
                 iconAnchor: [8, 8] 
             });
             const markerInstance = L.marker([lat, lng], { icon: tokenIcon }).addTo(map);
-            
-            // Immediate deletion on touch
             markerInstance.on('click', (event) => {
                 L.DomEvent.stopPropagation(event); 
                 map.removeLayer(markerInstance);
                 placedMarkers = placedMarkers.filter(m => m !== markerInstance);
             });
-            
             placedMarkers.push(markerInstance); 
             selectAssetToPlace(null);
         }
@@ -638,35 +668,11 @@
             }
         }
 
-        /* PRESENTATION OVERRIDE ENGINE: Simulates real-time walking paces indoors */
-        function forceManualGPSTrigger() {
-            simulatedStepCounter += 1;
-            let latShift = mapCenter[0];
-            let lngShift = mapCenter[1] + (simulatedStepCounter * 0.00015);
-            let temporaryMockCoordinates = [latShift, lngShift];
-            
-            if (map) {
-                map.setView(temporaryMockCoordinates, map.getZoom());
-                if (!userLocationMarker) {
-                    const gpsIcon = L.divIcon({ className: 'user-gps-dot', iconSize: [16, 16], iconAnchor: [8, 8] });
-                    userLocationMarker = L.marker(temporaryMockCoordinates, { icon: gpsIcon }).addTo(map);
-                } else { 
-                    userLocationMarker.setLatLng(temporaryMockCoordinates); 
-                }
-                if (tacticalPerimeterCircle) {
-                    tacticalPerimeterCircle.setLatLng(temporaryMockCoordinates);
-                    tacticalPerimeterCircle.setRadius(perimeterRadiusMeters);
-                }
-            }
-        }
-
-        /* HARD ACCURACY TRACKING MAP SYNC LOOPS */
         function trackUserGPS() {
             if (!navigator.geolocation) return;
             if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
 
             gpsWatchId = navigator.geolocation.watchPosition((p) => {
-                document.getElementById('gpsWarningBanner').style.display = 'none';
                 let coords = [p.coords.latitude, p.coords.longitude];
                 mapCenter = coords;
                 
@@ -683,7 +689,7 @@
                     tacticalPerimeterCircle.setRadius(perimeterRadiusMeters);
                 }
             }, () => {
-                document.getElementById('gpsWarningBanner').style.display = 'block';
+                // If on desktop hardware, follow baseline fallback anchor continuously
                 if (map && !isMapLocked) {
                     map.setView(mapCenter, map.getZoom());
                 }
@@ -721,7 +727,6 @@
         }
 
         function terminateSearch() { clearMapAssets(); clearDrawings(); switchScreen('screenLanding'); }
-        function executeAddressSearch() {}
         function triggerEmergencyAlert() { const el = document.getElementById('emergencyStrobe'); if(el) el.style.display = 'block'; }
         function resetEmergencyAlert() { const el = document.getElementById('emergencyStrobe'); if(el) el.style.display = 'none'; }
     </script>
