@@ -1,43 +1,41 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TACNET // LIVE COMMAND GRID</title>
+    <title>TACNET // COMMAND MATRIX</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body, html { margin: 0; height: 100%; font-family: sans-serif; background: #051a0a; color: #f1d279; }
-        #app-container { display: flex; height: 100vh; }
-        #sidebar { width: 300px; background: #0b2210; border-right: 2px solid #f1d279; padding: 20px; }
+        body { margin: 0; display: flex; height: 100vh; background: #020803; color: #f1d279; font-family: monospace; }
+        #sidebar { width: 300px; background: #0b2210; padding: 15px; border-right: 2px solid #f1d279; }
         #map { flex-grow: 1; }
-        .btn { background: #f1d279; color: #020803; border: none; padding: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        .tactical-btn { background: #f1d279; color: #020803; border: none; padding: 10px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: bold; }
+        .sos-btn { background: #9c2424; color: white; }
     </style>
 </head>
 <body>
-    <div id="app-container">
-        <div id="sidebar">
-            <h2>TACNET COMMAND</h2>
-            <input type="text" id="username" placeholder="Officer Name" style="width:100%; padding:8px; margin-bottom:10px;">
-            <button class="btn" onclick="deployOfficer()">DEPLOY ON GRID</button>
-            <div id="roster"></div>
-        </div>
-        <div id="map"></div>
+    <div id="sidebar">
+        <h2>TACNET COMMAND</h2>
+        <input type="text" id="officerName" placeholder="Enter Officer Name" style="width:90%; padding:5px;">
+        <button class="tactical-btn" onclick="addOfficer()">DEPLOY UNIT</button>
+        <hr>
+        <h3>ROSTER</h3>
+        <div id="rosterList"></div>
+        <button class="tactical-btn sos-btn" onclick="alert('SOS SIGNAL BROADCASTING!')">SOS EMERGENCY</button>
     </div>
+    <div id="map"></div>
 
     <script>
-        const map = L.map('map').setView([37.525, -79.05], 14);
+        const map = L.map('map').setView([37.525, -79.05], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        const markers = {};
 
-        function deployOfficer() {
-            const name = document.getElementById('username').value;
+        function addOfficer() {
+            const name = document.getElementById('officerName').value;
             if(!name) return;
-            
             const marker = L.marker([37.525 + (Math.random()*0.01), -79.05 + (Math.random()*0.01)]).addTo(map);
-            marker.bindPopup(`<b>${name}</b><br>STATUS: ACTIVE`).openPopup();
-            
-            markers[name] = marker;
-            document.getElementById('roster').innerHTML += `<div style="border-bottom:1px solid #f1d279; padding:5px;">${name} - ONLINE</div>`;
+            marker.bindPopup(`<b>${name}</b>`).openPopup();
+            document.getElementById('rosterList').innerHTML += `<div>• ${name} [ONLINE]</div>`;
         }
     </script>
 </body>
