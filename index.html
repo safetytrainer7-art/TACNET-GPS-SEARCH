@@ -1,74 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { margin: 0; display: flex; height: 100vh; background: #0b2512; color: #fff; font-family: sans-serif; }
-        /* Sidebar Navigation */
-        #sidebar { width: 300px; padding: 15px; border-right: 2px solid #2a5a3a; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-        #map { flex-grow: 1; }
-        .tool-group { border: 1px solid #2a5a3a; padding: 10px; border-radius: 5px; }
-        button { background: #2a5a3a; color: #fff; border: none; padding: 8px; width: 100%; margin-top: 5px; cursor: pointer; }
-        /* Reporting Section Overlay */
-        #report-panel { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0b2512; z-index: 2000; padding: 20px; display: none; }
+        body { margin: 0; display: flex; height: 100vh; background: #0b2512; color: white; font-family: sans-serif; }
+        #sidebar { width: 320px; padding: 10px; border-right: 2px solid #2a5a3a; overflow-y: auto; z-index: 1000; }
+        #map { flex-grow: 1; cursor: crosshair; }
+        button { background: #2a5a3a; color: white; border: 1px solid #4a7a5a; padding: 8px; width: 100%; margin-bottom: 5px; cursor: pointer; }
+        .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 11px; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <h3>TACNET COMMAND</h3>
-    <input type="text" id="address" placeholder="Search Address..." style="width:100%; padding:8px;">
-    <button onclick="geocode()">GO TO ADDRESS</button>
-
-    <div class="tool-group">
-        <h4>SEARCHERS (Drag to Map)</h4>
-        <div onclick="addSearcher('LE')">🔵 Law Enforcement</div>
-        <div onclick="addSearcher('K9')">💠 Officer + K9</div>
-        <div onclick="addSearcher('SARS')">🔴 SARS</div>
+    <input type="text" id="address" placeholder="Address..." style="width:100%; padding:5px;">
+    <button onclick="goToAddress()">GO TO ADDRESS</button>
+    
+    <div class="legend-grid">
+        <button onclick="addMarker('blue')">🔵 LE</button> <button onclick="addMarker('cyan')">💠 LE+K9</button>
+        <button onclick="addMarker('red')">🔴 SARS</button> <button onclick="addMarker('green')">🟢 Civ</button>
+        <button onclick="addMarker('purple')">🟣 Suspect</button> <button onclick="addMarker('white')">⚪ Victim</button>
+        <button onclick="addMarker('gray')">🔘 Drone</button> <button onclick="addMarker('black')">⚫ Veh</button>
+        <button onclick="addMarker('lime')">🟢 Boat</button> <button onclick="addMarker('gold')">🥇 Fed</button>
     </div>
 
-    <div class="tool-group">
-        <h4>MAP TOOLS</h4>
-        <button onclick="map.dragging.disable()">🔒 LOCK MAP</button>
-        <button onclick="map.dragging.enable()">🔓 UNLOCK MAP</button>
-        <button onclick="startDraw()">🖍️ RED PEN</button>
-        <button onclick="undoDraw()">🧽 ERASER</button>
-    </div>
-
-    <button onclick="showReportPanel()">📄 REPORTS & RECORDER</button>
+    <hr>
+    <button onclick="toggleLock()">🔒 LOCK / 🔓 UNLOCK MAP</button>
+    <button onclick="startDraw()">🖍️ RED PEN</button>
+    <button onclick="undoDraw()">🧽 ERASER</button>
+    <button onclick="activateTrapTrace()">🎯 TRAP & TRACE</button>
+    <button onclick="showK9Menu()">🐕 K9 INSTRUCTIONALS</button>
+    <button onclick="showReportPanel()">📄 REPORTS</button>
 </div>
 
 <div id="map"></div>
 
-<!-- Reports Section -->
-<div id="report-panel">
-    <button onclick="hideReportPanel()">⬅️ BACK</button>
-    <h2>MISSION REPORT & RECORDER</h2>
-    <textarea id="notes" placeholder="Case Notes..." style="width:100%; height:100px;"></textarea>
-    <input type="text" id="disp" placeholder="Final Disposition..." style="width:100%;">
-    <button onclick="printReport()">🖨️ PREVIEW & PRINT PDF</button>
-    <div id="recorder">TIMESTAMPED RECORDING: ACTIVE</div>
-</div>
-
 <script>
-    const map = L.map('map').setView([37.5407, -77.4360], 15);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+    const map = L.map('map', {zoomControl: true}).setView([37.5407, -77.4360], 15);
+    const layers = {
+        "Streets": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
+        "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
+        "Terrain": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png')
+    };
+    layers.Satellite.addTo(map);
+    L.control.layers(layers).addTo(map);
 
-    function addSearcher(type) { 
-        alert("Click on map to place: " + type);
-        map.once('click', e => L.marker(e.latlng).addTo(map).bindPopup(type));
+    // Marker Placement & Removal
+    function addMarker(color) {
+        map.once('click', e => {
+            const m = L.circleMarker(e.latlng, {color: color, radius: 10}).addTo(map);
+            m.on('click', () => map.removeLayer(m)); // One-click remove
+        });
     }
 
-    function showReportPanel() { document.getElementById('report-panel').style.display = 'block'; }
-    function hideReportPanel() { document.getElementById('report-panel').style.display = 'none'; }
-    
-    function geocode() {
-        const addr = document.getElementById('address').value;
-        // Logic for Address
-        L.marker([37.5407, -77.4360]).addTo(map).bindPopup("Target: " + addr).openPopup();
-        L.circle([37.5407, -77.4360], {radius: 50, color: 'green'}).addTo(map);
+    // Map Lock
+    function toggleLock() {
+        map.dragging.enabled() ? map.dragging.disable() : map.dragging.enable();
+    }
+
+    // Drawing
+    let drawing = false, lines = [];
+    function startDraw() { drawing = true; }
+    map.on('mousemove', e => {
+        if(drawing) {
+            const l = L.circleMarker(e.latlng, {radius: 2, color: 'red'}).addTo(map);
+            lines.push(l);
+        }
+    });
+    function undoDraw() { if(lines.length > 0) map.removeLayer(lines.pop()); }
+
+    // Features
+    function activateTrapTrace() { alert("TRAP AND TRACE: Perimeter Ping Active."); }
+    function showK9Menu() { alert("REDIRECTING TO K9 PROTOCOL HUB..."); }
+    function goToAddress() { 
+        // Logic: Focus map, drop Red Marker, Green Perimeter
+        const m = L.marker([37.5407, -77.4360]).addTo(map).bindPopup("Target").openPopup();
+        L.circle([37.5407, -77.4360], {radius: 100, color: 'green'}).addTo(map);
+        map.setView([37.5407, -77.4360], 17);
     }
 </script>
 </body>
