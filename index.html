@@ -3,10 +3,12 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <style>
         body { margin: 0; display: flex; height: 100vh; background: #0b2512; color: white; font-family: sans-serif; }
-        #sidebar { width: 320px; padding: 10px; border-right: 2px solid #2a5a3a; overflow-y: auto; z-index: 1000; }
+        #sidebar { width: 320px; padding: 10px; border-right: 2px solid #2a5a3a; z-index: 1000; background: #0b2512; }
         #map { flex-grow: 1; }
         button { background: #2a5a3a; border: 1px solid #4a7a5a; color: white; padding: 10px; width: 100%; margin-bottom: 5px; cursor: pointer; }
     </style>
@@ -15,39 +17,35 @@
 
 <div id="sidebar">
     <h3>TACNET COMMAND</h3>
-    <input type="text" id="address" placeholder="Enter Address..." style="width:100%; padding:8px;">
-    <button onclick="geocode()">GO TO ADDRESS</button>
-    <hr>
     <button onclick="toggleDraw()">🖍️ RED PEN (ON/OFF)</button>
     <button onclick="undoDraw()">🧽 ERASER</button>
-    <button onclick="alert('TRAP AND TRACE: ACTIVE - PINGING ZONES')">🎯 TRAP & TRACE</button>
-    <div id="status" style="font-size:0.8em; color:yellow;">Status: Live GPS Feed Connected</div>
+    <button onclick="alert('TRAP AND TRACE: ACTIVE')">🎯 TRAP & TRACE</button>
+    <div id="status" style="font-size:0.8em; color:yellow; margin-top:10px;">Status: Nominatim Live Geocoding</div>
 </div>
 
 <div id="map"></div>
 
 <script>
-    const map = L.map('map').setView([37.5407, -77.4360], 15);
+    const map = L.map('map').setView([37.5407, -77.4360], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // Drawing Engine (Fixed: Continuous lines)
-    let drawing = false, currentPath = [];
+    // Free OpenStreetMap Geocoder (No API Key)
+    L.Control.geocoder({
+        defaultMarkGeocode: true
+    }).addTo(map);
+
+    // Drawing Engine
+    let drawing = false, currentPath = null;
     function toggleDraw() { drawing = !drawing; map.dragging.disable(); }
     
-    map.on('mousedown', () => { if(drawing) currentPath = L.polyline([], {color: 'red', weight: 4}).addTo(map); });
+    map.on('mousedown', (e) => { 
+        if(drawing) {
+            currentPath = L.polyline([], {color: 'orange', weight: 5}).addTo(map); // Using orange as requested
+        } 
+    });
     map.on('mousemove', e => { if(drawing && currentPath) currentPath.addLatLng(e.latlng); });
     map.on('mouseup', () => { drawing = false; map.dragging.enable(); });
-    function undoDraw() { map.removeLayer(currentPath); }
-
-    // Geocoder (Fixed: Real Location Jump)
-    function geocode() {
-        const addr = document.getElementById('address').value;
-        // Simulating coordinate jump for Richmond area demo
-        const newCoords = [37.5507, -77.4460]; 
-        map.setView(newCoords, 17);
-        L.marker(newCoords).addTo(map).bindPopup("Target: " + addr).openPopup();
-        L.circle(newCoords, {radius: 50, color: 'green'}).addTo(map);
-    }
+    function undoDraw() { if(currentPath) map.removeLayer(currentPath); }
 </script>
 </body>
 </html>
