@@ -1,76 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <meta charset="UTF-8">
+    <title>TACNET // LIVE COMMAND GRID</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { margin: 0; display: flex; height: 100vh; background: #0b2512; color: white; font-family: sans-serif; }
-        #sidebar { width: 320px; padding: 15px; border-right: 2px solid #2a5a3a; z-index: 1000; background: #0b2512; overflow-y: auto; }
+        body, html { margin: 0; height: 100%; font-family: sans-serif; background: #051a0a; color: #f1d279; }
+        #app-container { display: flex; height: 100vh; }
+        #sidebar { width: 300px; background: #0b2210; border-right: 2px solid #f1d279; padding: 20px; }
         #map { flex-grow: 1; }
-        button { background: #2a5a3a; border: 1px solid #4a7a5a; color: white; padding: 10px; width: 100%; margin-bottom: 5px; cursor: pointer; }
+        .btn { background: #f1d279; color: #020803; border: none; padding: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
 <body>
-
-<div id="sidebar">
-    <h3>TACNET COMMAND</h3>
-    <input type="text" id="address" placeholder="Enter Address..." style="width:100%; padding:8px; margin-bottom:5px;">
-    <button onclick="goToAddress()">GO TO ADDRESS</button>
-    
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
-        <button onclick="addMarker('blue')">🔵 LE</button> <button onclick="addMarker('cyan')">💠 K9</button>
-        <button onclick="addMarker('red')">🔴 SARS</button> <button onclick="addMarker('green')">🟢 Civ</button>
+    <div id="app-container">
+        <div id="sidebar">
+            <h2>TACNET COMMAND</h2>
+            <input type="text" id="username" placeholder="Officer Name" style="width:100%; padding:8px; margin-bottom:10px;">
+            <button class="btn" onclick="deployOfficer()">DEPLOY ON GRID</button>
+            <div id="roster"></div>
+        </div>
+        <div id="map"></div>
     </div>
 
-    <hr>
-    <button id="lockBtn" onclick="toggleLock()">🔒 MAP LOCK</button>
-    <button id="drawBtn" onclick="toggleDraw()">🖍️ RED PEN (ON/OFF)</button>
-    <button onclick="undoDraw()">🧽 ERASER</button>
-    <button onclick="alert('TRAP & TRACE ACTIVE')">🎯 TRAP & TRACE</button>
-</div>
+    <script>
+        const map = L.map('map').setView([37.525, -79.05], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        const markers = {};
 
-<div id="map"></div>
-
-<script>
-    const map = L.map('map').setView([37.5407, -77.4360], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    // 1. GPS Address Logic
-    function goToAddress() {
-        const addr = document.getElementById('address').value;
-        // Uses mock logic to jump; in production replaces with Nominatim
-        map.setView([37.5407, -77.4360], 17);
-        L.marker([37.5407, -77.4360]).addTo(map).bindPopup("TARGET: " + addr);
-    }
-
-    // 2. Map Lock
-    let isLocked = false;
-    function toggleLock() {
-        isLocked = !isLocked;
-        isLocked ? map.dragging.disable() : map.dragging.enable();
-        document.getElementById('lockBtn').innerText = isLocked ? "🔓 MAP UNLOCKED" : "🔒 MAP LOCKED";
-    }
-
-    // 3. Searchers (Place, Move, Remove)
-    function addMarker(color) {
-        map.once('click', e => {
-            const m = L.circleMarker(e.latlng, {color: color, radius: 10, draggable: true}).addTo(map);
-            m.on('click', () => map.removeLayer(m)); // One click to remove
-        });
-    }
-
-    // 4. Drawing (Fixed: Stop/Start control)
-    let drawing = false, currentPath = null;
-    function toggleDraw() {
-        drawing = !drawing;
-        document.getElementById('drawBtn').style.background = drawing ? "#8a2a2a" : "#2a5a3a";
-    }
-    
-    map.on('mousedown', e => { if(drawing) currentPath = L.polyline([], {color: 'red', weight: 4}).addTo(map); });
-    map.on('mousemove', e => { if(drawing && currentPath) currentPath.addLatLng(e.latlng); });
-    map.on('mouseup', () => { currentPath = null; });
-    function undoDraw() { if(map.hasLayer(currentPath)) map.removeLayer(currentPath); }
-</script>
+        function deployOfficer() {
+            const name = document.getElementById('username').value;
+            if(!name) return;
+            
+            const marker = L.marker([37.525 + (Math.random()*0.01), -79.05 + (Math.random()*0.01)]).addTo(map);
+            marker.bindPopup(`<b>${name}</b><br>STATUS: ACTIVE`).openPopup();
+            
+            markers[name] = marker;
+            document.getElementById('roster').innerHTML += `<div style="border-bottom:1px solid #f1d279; padding:5px;">${name} - ONLINE</div>`;
+        }
+    </script>
 </body>
 </html>
