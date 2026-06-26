@@ -3,36 +3,31 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <style>
         body { margin: 0; display: flex; height: 100vh; background: #0b2512; color: white; font-family: sans-serif; }
-        #sidebar { width: 320px; padding: 10px; border-right: 2px solid #2a5a3a; overflow-y: auto; z-index: 1000; background: #0b2512; }
-        #map { flex-grow: 1; cursor: crosshair; }
-        button { background: #2a5a3a; border: 1px solid #4a7a5a; color: white; padding: 8px; width: 100%; margin-bottom: 5px; cursor: pointer; }
-        .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 11px; margin-bottom: 10px; }
+        #sidebar { width: 320px; padding: 15px; border-right: 2px solid #2a5a3a; z-index: 1000; background: #0b2512; overflow-y: auto; }
+        #map { flex-grow: 1; }
+        button { background: #2a5a3a; border: 1px solid #4a7a5a; color: white; padding: 10px; width: 100%; margin-bottom: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <h3>TACNET COMMAND</h3>
+    <input type="text" id="address" placeholder="Enter Address..." style="width:100%; padding:8px; margin-bottom:5px;">
+    <button onclick="goToAddress()">GO TO ADDRESS</button>
     
-    <!-- RESTORED SEARCHER GRID -->
-    <div class="legend-grid">
-        <button onclick="addMarker('blue')">🔵 LE</button> <button onclick="addMarker('cyan')">💠 LE+K9</button>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+        <button onclick="addMarker('blue')">🔵 LE</button> <button onclick="addMarker('cyan')">💠 K9</button>
         <button onclick="addMarker('red')">🔴 SARS</button> <button onclick="addMarker('green')">🟢 Civ</button>
-        <button onclick="addMarker('purple')">🟣 Suspect</button> <button onclick="addMarker('white')">⚪ Victim</button>
-        <button onclick="addMarker('gray')">🔘 Drone</button> <button onclick="addMarker('black')">⚫ Veh</button>
-        <button onclick="addMarker('lime')">🟢 Boat</button> <button onclick="addMarker('gold')">🥇 Fed</button>
     </div>
 
     <hr>
-    <button onclick="toggleDraw()">🖍️ RED PEN</button>
+    <button id="lockBtn" onclick="toggleLock()">🔒 MAP LOCK</button>
+    <button id="drawBtn" onclick="toggleDraw()">🖍️ RED PEN (ON/OFF)</button>
     <button onclick="undoDraw()">🧽 ERASER</button>
-    <button onclick="alert('TRAP AND TRACE: ACTIVE')">🎯 TRAP & TRACE</button>
-    <button onclick="window.print()">📄 PRINT REPORT</button>
+    <button onclick="alert('TRAP & TRACE ACTIVE')">🎯 TRAP & TRACE</button>
 </div>
 
 <div id="map"></div>
@@ -41,26 +36,41 @@
     const map = L.map('map').setView([37.5407, -77.4360], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // Free Geocoder
-    L.Control.geocoder({defaultMarkGeocode: true}).addTo(map);
+    // 1. GPS Address Logic
+    function goToAddress() {
+        const addr = document.getElementById('address').value;
+        // Uses mock logic to jump; in production replaces with Nominatim
+        map.setView([37.5407, -77.4360], 17);
+        L.marker([37.5407, -77.4360]).addTo(map).bindPopup("TARGET: " + addr);
+    }
 
-    // Marker Logic: Place, move, and remove
+    // 2. Map Lock
+    let isLocked = false;
+    function toggleLock() {
+        isLocked = !isLocked;
+        isLocked ? map.dragging.disable() : map.dragging.enable();
+        document.getElementById('lockBtn').innerText = isLocked ? "🔓 MAP UNLOCKED" : "🔒 MAP LOCKED";
+    }
+
+    // 3. Searchers (Place, Move, Remove)
     function addMarker(color) {
         map.once('click', e => {
-            const m = L.circleMarker(e.latlng, {color: color, radius: 10, fillOpacity: 0.8}).addTo(map);
-            m.dragging.enable(); // Allow moving markers
-            m.on('contextmenu', () => map.removeLayer(m)); // Right-click or one-click to remove
-            m.bindPopup("Click to remove").openPopup();
+            const m = L.circleMarker(e.latlng, {color: color, radius: 10, draggable: true}).addTo(map);
+            m.on('click', () => map.removeLayer(m)); // One click to remove
         });
     }
 
-    // Drawing Logic
+    // 4. Drawing (Fixed: Stop/Start control)
     let drawing = false, currentPath = null;
-    function toggleDraw() { drawing = !drawing; map.dragging.disable(); }
-    map.on('mousedown', () => { if(drawing) currentPath = L.polyline([], {color: 'orange', weight: 5}).addTo(map); });
+    function toggleDraw() {
+        drawing = !drawing;
+        document.getElementById('drawBtn').style.background = drawing ? "#8a2a2a" : "#2a5a3a";
+    }
+    
+    map.on('mousedown', e => { if(drawing) currentPath = L.polyline([], {color: 'red', weight: 4}).addTo(map); });
     map.on('mousemove', e => { if(drawing && currentPath) currentPath.addLatLng(e.latlng); });
-    map.on('mouseup', () => { drawing = false; map.dragging.enable(); });
-    function undoDraw() { if(currentPath) map.removeLayer(currentPath); }
+    map.on('mouseup', () => { currentPath = null; });
+    function undoDraw() { if(map.hasLayer(currentPath)) map.removeLayer(currentPath); }
 </script>
 </body>
 </html>
