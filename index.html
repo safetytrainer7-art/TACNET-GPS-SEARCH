@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <title>TACNET Command Center</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
     <style>
         body { margin: 0; display: flex; height: 100vh; background: #0b2512; color: white; font-family: sans-serif; }
-        #sidebar { width: 320px; padding: 15px; border-right: 2px solid #2a5a3a; overflow-y: auto; }
-        #map { flex-grow: 1; }
-        .legend-bar { position: absolute; bottom: 10px; left: 330px; background: #1a1a1a; padding: 10px; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; z-index: 1000; }
-        button { background: #2a5a3a; color: white; border: none; padding: 10px; width: 100%; margin-bottom: 5px; cursor: pointer; }
+        #sidebar { width: 350px; padding: 15px; border-right: 2px solid #2a5a3a; overflow-y: auto; }
+        #map { flex-grow: 1; cursor: crosshair; }
+        .legend-bar { position: absolute; bottom: 10px; left: 360px; background: #1a1a1a; padding: 10px; display: flex; gap: 10px; z-index: 1000; font-size: 12px; }
+        button { background: #2a5a3a; color: white; border: 1px solid #4a7a5a; padding: 8px; width: 100%; margin-bottom: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -20,49 +19,77 @@
 <div id="sidebar">
     <h3>TACNET COMMAND</h3>
     <input type="text" id="address" placeholder="Enter address..." style="width:100%; padding:8px;">
-    <button onclick="geocode()">GO</button>
-    <button onclick="toggleNVG('red')">RED NVG</button>
-    <button onclick="toggleNVG('green')">GREEN NVG</button>
-    <button id="sos" onclick="triggerSOS()" style="background:red;">SOS ALERT (OFF)</button>
-    <button onclick="terminateSearch()" style="background:black;">TERMINATE SEARCH</button>
-    <button onclick="window.print()">GENERATE COURT REPORT</button>
+    <button onclick="geocode()">GO TO ADDRESS</button>
+    <button onclick="toggleMapLock()">LOCK MAP / UNLOCK MAP</button>
+    <button onclick="toggleDrawing()">ACTIVATE FREEHAND (RED)</button>
+    <button onclick="undoLastLine()">ERASER (UNDO LAST)</button>
+    <button onclick="toggleTrapTrace()">TRAP & TRACE PING</button>
+    <hr>
+    <h4>K9 VOICE PROTOCOLS</h4>
+    <button onclick="playK9Audio('CPR')">CPR</button>
+    <button onclick="playK9Audio('GUNSHOT')">GUNSHOT</button>
+    <button onclick="playK9Audio('HEAT')">HEAT EXHAUSTION</button>
+    <hr>
+    <h4>REPORTING</h4>
+    <textarea id="notes" placeholder="Case Notes..." style="width:100%; height:60px;"></textarea>
+    <input type="text" id="disposition" placeholder="Final Disposition..." style="width:100%;">
+    <button onclick="generateFinalReport()">PRE-PROOF & PRINT</button>
+    <button onclick="location.reload()" style="background:black;">BACK / NEW SEARCH</button>
 </div>
 
 <div id="map"></div>
 
 <div class="legend-bar">
-    <span>🔵 LE</span> <span>💠 LE+K9</span> <span>🔴 SARS</span> <span>🟢 Civ</span> <span>🟣 Suspect</span> <span>⚪ Victim</span> <span>🔘 Drone</span> <span>🟠 Article</span> <span>⚫ Vehicle/Boat</span> <span>🟢 SARS Boat</span> <span>🟨 Command</span> <span>🟦 VSP</span> <span>🥇 Federal</span>
+    <span>🔵 LE</span> <span>💠 LE+K9</span> <span>🔴 SARS</span> <span>🟢 Civ</span> <span>🟣 Suspect</span> <span>⚪ Victim</span> <span>🔘 Drone</span> <span>🟠 Article</span> <span>⚫ Vehicle/Boat</span> <span>🟢 SARS Boat</span> <span>🟨 Cmd</span>
 </div>
 
 <script>
     const map = L.map('map').setView([37.5407, -77.4360], 15);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+    const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+    L.control.layers({"Streets": streets, "Satellite": sat}).addTo(map);
 
-    // Drawing Engine
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-    const drawControl = new L.Control.Draw({ edit: { featureGroup: drawnItems } });
-    map.addControl(drawControl);
+    let isDrawing = false;
+    let drawnLines = [];
+
+    // Map Lock
+    function toggleMapLock() {
+        map.dragging.enabled() ? map.dragging.disable() : map.dragging.enable();
+    }
+
+    // Drawing
+    function toggleDrawing() { isDrawing = !isDrawing; }
+    function undoLastLine() { if(drawnLines.length > 0) map.removeLayer(drawnLines.pop()); }
+    
+    map.on('mousemove', e => {
+        if(isDrawing) {
+            const line = L.circleMarker(e.latlng, {radius: 2, color: 'red'}).addTo(map);
+            drawnLines.push(line);
+        }
+    });
+
+    // Trap & Trace
+    function toggleTrapTrace() {
+        alert("TRAP AND TRACE: Real-time Ping Active. All units advised.");
+        L.marker(map.getCenter(), {icon: L.divIcon({html: '🔴'})}).addTo(map).bindPopup("TRAP & TRACE ACTIVE").openPopup();
+    }
+
+    // K9 Audio Mock
+    function playK9Audio(type) {
+        alert("VOICE INSTRUCTION: " + type + " protocol. Clear airways, compress chest at 100bpm...");
+    }
+
+    // Report
+    function generateFinalReport() {
+        const report = `Disposition: ${document.getElementById('disposition').value}\nNotes: ${document.getElementById('notes').value}`;
+        alert("PRE-PROOF: " + report);
+        window.print();
+    }
 
     function geocode() {
         const addr = document.getElementById('address').value;
-        // Logic for perimeter circle and red dot placement
-        const redDot = L.circleMarker([37.54, -77.43], {color: 'red', radius: 8}).addTo(map);
-        const perimeter = L.circle([37.54, -77.43], {radius: 50, color: 'green'}).addTo(map);
-    }
-
-    function triggerSOS() {
-        const btn = document.getElementById('sos');
-        btn.innerText = "SOS ACTIVE - FLASHING";
-        btn.style.animation = "blink 1s infinite";
-    }
-
-    function terminateSearch() {
-        if(confirm("TERMINATE SEARCH?")) window.location.reload();
-    }
-
-    function toggleNVG(color) {
-        document.getElementById('map').style.filter = (color === 'green') ? 'sepia(100%) hue-rotate(80deg)' : 'invert(100%)';
+        const target = L.marker([37.5407, -77.4360], {color: 'red'}).addTo(map).bindPopup("TARGET: " + addr);
+        L.circle([37.5407, -77.4360], {radius: 100, color: 'green'}).addTo(map);
     }
 </script>
 </body>
