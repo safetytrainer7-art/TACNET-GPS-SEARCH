@@ -1,95 +1,56 @@
+<!-- Integrated Master TACNET File -->
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>TACNET Command Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { margin: 0; display: flex; height: 100vh; background: #0b2512; color: white; font-family: sans-serif; }
-        #sidebar { width: 350px; padding: 15px; border-right: 2px solid #2a5a3a; overflow-y: auto; }
-        #map { flex-grow: 1; cursor: crosshair; }
-        .legend-bar { position: absolute; bottom: 10px; left: 360px; background: #1a1a1a; padding: 10px; display: flex; gap: 10px; z-index: 1000; font-size: 12px; }
-        button { background: #2a5a3a; color: white; border: 1px solid #4a7a5a; padding: 8px; width: 100%; margin-bottom: 5px; cursor: pointer; }
+        body { margin: 0; display: flex; height: 100vh; background: #0b2512; color: white; overflow: hidden; }
+        #sidebar { width: 300px; padding: 10px; overflow-y: auto; background: #0b2512; z-index: 1000; }
+        #map { flex-grow: 1; }
+        /* Mobile Scaling */
+        @media (max-width: 600px) { #sidebar { width: 100%; position: absolute; height: 30%; } }
+        .legend-bar { position: absolute; bottom: 10px; left: 310px; background: #1a1a1a; padding: 5px; z-index: 1000; font-size: 10px; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <h3>TACNET COMMAND</h3>
-    <input type="text" id="address" placeholder="Enter address..." style="width:100%; padding:8px;">
-    <button onclick="geocode()">GO TO ADDRESS</button>
-    <button onclick="toggleMapLock()">LOCK MAP / UNLOCK MAP</button>
-    <button onclick="toggleDrawing()">ACTIVATE FREEHAND (RED)</button>
-    <button onclick="undoLastLine()">ERASER (UNDO LAST)</button>
-    <button onclick="toggleTrapTrace()">TRAP & TRACE PING</button>
+    <input type="text" id="address" placeholder="Search Address...">
+    <button onclick="goToAddress()">GO</button>
+    <button onclick="toggleLock()">LOCK/UNLOCK MAP</button>
+    <button onclick="toggleDraw()">DRAW MODE</button>
+    <button onclick="undo()">ERASER</button>
+    <button onclick="toggleTrapTrace()">TRAP & TRACE</button>
     <hr>
-    <h4>K9 VOICE PROTOCOLS</h4>
-    <button onclick="playK9Audio('CPR')">CPR</button>
-    <button onclick="playK9Audio('GUNSHOT')">GUNSHOT</button>
-    <button onclick="playK9Audio('HEAT')">HEAT EXHAUSTION</button>
-    <hr>
-    <h4>REPORTING</h4>
-    <textarea id="notes" placeholder="Case Notes..." style="width:100%; height:60px;"></textarea>
-    <input type="text" id="disposition" placeholder="Final Disposition..." style="width:100%;">
-    <button onclick="generateFinalReport()">PRE-PROOF & PRINT</button>
-    <button onclick="location.reload()" style="background:black;">BACK / NEW SEARCH</button>
+    <h4>K9 VOICE</h4>
+    <button onclick="playAudio('CPR')">CPR</button>
+    <textarea id="notes" placeholder="Case Notes..."></textarea>
+    <button onclick="printReport()">PRINT REPORT</button>
 </div>
 
 <div id="map"></div>
 
-<div class="legend-bar">
-    <span>🔵 LE</span> <span>💠 LE+K9</span> <span>🔴 SARS</span> <span>🟢 Civ</span> <span>🟣 Suspect</span> <span>⚪ Victim</span> <span>🔘 Drone</span> <span>🟠 Article</span> <span>⚫ Vehicle/Boat</span> <span>🟢 SARS Boat</span> <span>🟨 Cmd</span>
-</div>
-
 <script>
     const map = L.map('map').setView([37.5407, -77.4360], 15);
-    const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-    L.control.layers({"Streets": streets, "Satellite": sat}).addTo(map);
+    // Three-View Selection
+    const baseMaps = {
+        "Streets": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
+        "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
+        "Terrain": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png')
+    };
+    baseMaps.Satellite.addTo(map);
+    L.control.layers(baseMaps).addTo(map);
 
-    let isDrawing = false;
-    let drawnLines = [];
-
-    // Map Lock
-    function toggleMapLock() {
-        map.dragging.enabled() ? map.dragging.disable() : map.dragging.enable();
-    }
-
-    // Drawing
-    function toggleDrawing() { isDrawing = !isDrawing; }
-    function undoLastLine() { if(drawnLines.length > 0) map.removeLayer(drawnLines.pop()); }
-    
-    map.on('mousemove', e => {
-        if(isDrawing) {
-            const line = L.circleMarker(e.latlng, {radius: 2, color: 'red'}).addTo(map);
-            drawnLines.push(line);
-        }
-    });
-
-    // Trap & Trace
-    function toggleTrapTrace() {
-        alert("TRAP AND TRACE: Real-time Ping Active. All units advised.");
-        L.marker(map.getCenter(), {icon: L.divIcon({html: '🔴'})}).addTo(map).bindPopup("TRAP & TRACE ACTIVE").openPopup();
-    }
-
-    // K9 Audio Mock
-    function playK9Audio(type) {
-        alert("VOICE INSTRUCTION: " + type + " protocol. Clear airways, compress chest at 100bpm...");
-    }
-
-    // Report
-    function generateFinalReport() {
-        const report = `Disposition: ${document.getElementById('disposition').value}\nNotes: ${document.getElementById('notes').value}`;
-        alert("PRE-PROOF: " + report);
-        window.print();
-    }
-
-    function geocode() {
-        const addr = document.getElementById('address').value;
-        const target = L.marker([37.5407, -77.4360], {color: 'red'}).addTo(map).bindPopup("TARGET: " + addr);
-        L.circle([37.5407, -77.4360], {radius: 100, color: 'green'}).addTo(map);
+    // Perimeter & Target
+    let target, perimeter;
+    function goToAddress() {
+        // Mock geocoding logic for demonstration
+        if(target) map.removeLayer(target);
+        target = L.circleMarker([37.5407, -77.4360], {color: 'red'}).addTo(map);
+        perimeter = L.circle([37.5407, -77.4360], {radius: 50, color: 'green'}).addTo(map);
     }
 </script>
 </body>
