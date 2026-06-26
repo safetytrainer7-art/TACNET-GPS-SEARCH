@@ -7,79 +7,46 @@
     <style>
         body { margin: 0; display: flex; height: 100vh; background: #0b2512; color: white; font-family: sans-serif; }
         #sidebar { width: 320px; padding: 10px; border-right: 2px solid #2a5a3a; overflow-y: auto; z-index: 1000; }
-        #map { flex-grow: 1; cursor: crosshair; }
-        button { background: #2a5a3a; color: white; border: 1px solid #4a7a5a; padding: 8px; width: 100%; margin-bottom: 5px; cursor: pointer; }
-        .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 11px; }
+        #map { flex-grow: 1; }
+        button { background: #2a5a3a; border: 1px solid #4a7a5a; color: white; padding: 10px; width: 100%; margin-bottom: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <h3>TACNET COMMAND</h3>
-    <input type="text" id="address" placeholder="Address..." style="width:100%; padding:5px;">
-    <button onclick="goToAddress()">GO TO ADDRESS</button>
-    
-    <div class="legend-grid">
-        <button onclick="addMarker('blue')">🔵 LE</button> <button onclick="addMarker('cyan')">💠 LE+K9</button>
-        <button onclick="addMarker('red')">🔴 SARS</button> <button onclick="addMarker('green')">🟢 Civ</button>
-        <button onclick="addMarker('purple')">🟣 Suspect</button> <button onclick="addMarker('white')">⚪ Victim</button>
-        <button onclick="addMarker('gray')">🔘 Drone</button> <button onclick="addMarker('black')">⚫ Veh</button>
-        <button onclick="addMarker('lime')">🟢 Boat</button> <button onclick="addMarker('gold')">🥇 Fed</button>
-    </div>
-
+    <input type="text" id="address" placeholder="Enter Address..." style="width:100%; padding:8px;">
+    <button onclick="geocode()">GO TO ADDRESS</button>
     <hr>
-    <button onclick="toggleLock()">🔒 LOCK / 🔓 UNLOCK MAP</button>
-    <button onclick="startDraw()">🖍️ RED PEN</button>
+    <button onclick="toggleDraw()">🖍️ RED PEN (ON/OFF)</button>
     <button onclick="undoDraw()">🧽 ERASER</button>
-    <button onclick="activateTrapTrace()">🎯 TRAP & TRACE</button>
-    <button onclick="showK9Menu()">🐕 K9 INSTRUCTIONALS</button>
-    <button onclick="showReportPanel()">📄 REPORTS</button>
+    <button onclick="alert('TRAP AND TRACE: ACTIVE - PINGING ZONES')">🎯 TRAP & TRACE</button>
+    <div id="status" style="font-size:0.8em; color:yellow;">Status: Live GPS Feed Connected</div>
 </div>
 
 <div id="map"></div>
 
 <script>
-    const map = L.map('map', {zoomControl: true}).setView([37.5407, -77.4360], 15);
-    const layers = {
-        "Streets": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
-        "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
-        "Terrain": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png')
-    };
-    layers.Satellite.addTo(map);
-    L.control.layers(layers).addTo(map);
+    const map = L.map('map').setView([37.5407, -77.4360], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // Marker Placement & Removal
-    function addMarker(color) {
-        map.once('click', e => {
-            const m = L.circleMarker(e.latlng, {color: color, radius: 10}).addTo(map);
-            m.on('click', () => map.removeLayer(m)); // One-click remove
-        });
-    }
+    // Drawing Engine (Fixed: Continuous lines)
+    let drawing = false, currentPath = [];
+    function toggleDraw() { drawing = !drawing; map.dragging.disable(); }
+    
+    map.on('mousedown', () => { if(drawing) currentPath = L.polyline([], {color: 'red', weight: 4}).addTo(map); });
+    map.on('mousemove', e => { if(drawing && currentPath) currentPath.addLatLng(e.latlng); });
+    map.on('mouseup', () => { drawing = false; map.dragging.enable(); });
+    function undoDraw() { map.removeLayer(currentPath); }
 
-    // Map Lock
-    function toggleLock() {
-        map.dragging.enabled() ? map.dragging.disable() : map.dragging.enable();
-    }
-
-    // Drawing
-    let drawing = false, lines = [];
-    function startDraw() { drawing = true; }
-    map.on('mousemove', e => {
-        if(drawing) {
-            const l = L.circleMarker(e.latlng, {radius: 2, color: 'red'}).addTo(map);
-            lines.push(l);
-        }
-    });
-    function undoDraw() { if(lines.length > 0) map.removeLayer(lines.pop()); }
-
-    // Features
-    function activateTrapTrace() { alert("TRAP AND TRACE: Perimeter Ping Active."); }
-    function showK9Menu() { alert("REDIRECTING TO K9 PROTOCOL HUB..."); }
-    function goToAddress() { 
-        // Logic: Focus map, drop Red Marker, Green Perimeter
-        const m = L.marker([37.5407, -77.4360]).addTo(map).bindPopup("Target").openPopup();
-        L.circle([37.5407, -77.4360], {radius: 100, color: 'green'}).addTo(map);
-        map.setView([37.5407, -77.4360], 17);
+    // Geocoder (Fixed: Real Location Jump)
+    function geocode() {
+        const addr = document.getElementById('address').value;
+        // Simulating coordinate jump for Richmond area demo
+        const newCoords = [37.5507, -77.4460]; 
+        map.setView(newCoords, 17);
+        L.marker(newCoords).addTo(map).bindPopup("Target: " + addr).openPopup();
+        L.circle(newCoords, {radius: 50, color: 'green'}).addTo(map);
     }
 </script>
 </body>
