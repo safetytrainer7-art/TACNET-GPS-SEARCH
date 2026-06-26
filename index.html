@@ -8,41 +8,56 @@
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <style>
         body { margin: 0; display: flex; height: 100vh; background: #0b2512; color: white; font-family: sans-serif; }
-        #sidebar { width: 320px; padding: 10px; border-right: 2px solid #2a5a3a; z-index: 1000; background: #0b2512; }
-        #map { flex-grow: 1; }
-        button { background: #2a5a3a; border: 1px solid #4a7a5a; color: white; padding: 10px; width: 100%; margin-bottom: 5px; cursor: pointer; }
+        #sidebar { width: 320px; padding: 10px; border-right: 2px solid #2a5a3a; overflow-y: auto; z-index: 1000; background: #0b2512; }
+        #map { flex-grow: 1; cursor: crosshair; }
+        button { background: #2a5a3a; border: 1px solid #4a7a5a; color: white; padding: 8px; width: 100%; margin-bottom: 5px; cursor: pointer; }
+        .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 11px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <h3>TACNET COMMAND</h3>
-    <button onclick="toggleDraw()">🖍️ RED PEN (ON/OFF)</button>
+    
+    <!-- RESTORED SEARCHER GRID -->
+    <div class="legend-grid">
+        <button onclick="addMarker('blue')">🔵 LE</button> <button onclick="addMarker('cyan')">💠 LE+K9</button>
+        <button onclick="addMarker('red')">🔴 SARS</button> <button onclick="addMarker('green')">🟢 Civ</button>
+        <button onclick="addMarker('purple')">🟣 Suspect</button> <button onclick="addMarker('white')">⚪ Victim</button>
+        <button onclick="addMarker('gray')">🔘 Drone</button> <button onclick="addMarker('black')">⚫ Veh</button>
+        <button onclick="addMarker('lime')">🟢 Boat</button> <button onclick="addMarker('gold')">🥇 Fed</button>
+    </div>
+
+    <hr>
+    <button onclick="toggleDraw()">🖍️ RED PEN</button>
     <button onclick="undoDraw()">🧽 ERASER</button>
     <button onclick="alert('TRAP AND TRACE: ACTIVE')">🎯 TRAP & TRACE</button>
-    <div id="status" style="font-size:0.8em; color:yellow; margin-top:10px;">Status: Nominatim Live Geocoding</div>
+    <button onclick="window.print()">📄 PRINT REPORT</button>
 </div>
 
 <div id="map"></div>
 
 <script>
-    const map = L.map('map').setView([37.5407, -77.4360], 13);
+    const map = L.map('map').setView([37.5407, -77.4360], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // Free OpenStreetMap Geocoder (No API Key)
-    L.Control.geocoder({
-        defaultMarkGeocode: true
-    }).addTo(map);
+    // Free Geocoder
+    L.Control.geocoder({defaultMarkGeocode: true}).addTo(map);
 
-    // Drawing Engine
+    // Marker Logic: Place, move, and remove
+    function addMarker(color) {
+        map.once('click', e => {
+            const m = L.circleMarker(e.latlng, {color: color, radius: 10, fillOpacity: 0.8}).addTo(map);
+            m.dragging.enable(); // Allow moving markers
+            m.on('contextmenu', () => map.removeLayer(m)); // Right-click or one-click to remove
+            m.bindPopup("Click to remove").openPopup();
+        });
+    }
+
+    // Drawing Logic
     let drawing = false, currentPath = null;
     function toggleDraw() { drawing = !drawing; map.dragging.disable(); }
-    
-    map.on('mousedown', (e) => { 
-        if(drawing) {
-            currentPath = L.polyline([], {color: 'orange', weight: 5}).addTo(map); // Using orange as requested
-        } 
-    });
+    map.on('mousedown', () => { if(drawing) currentPath = L.polyline([], {color: 'orange', weight: 5}).addTo(map); });
     map.on('mousemove', e => { if(drawing && currentPath) currentPath.addLatLng(e.latlng); });
     map.on('mouseup', () => { drawing = false; map.dragging.enable(); });
     function undoDraw() { if(currentPath) map.removeLayer(currentPath); }
